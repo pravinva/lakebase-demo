@@ -12,7 +12,8 @@ name: Lakebase branch per PR
 # NOTE: if the workspace enforces an IP access list (common in production), a
 # GitHub-hosted runner is blocked. Point the live jobs at a self-hosted runner
 # inside the allowed network by setting the repo variable CI_RUNNER to its
-# label; otherwise the live steps skip with guidance and the PR stays green.
+# label; the live jobs use the runner's own python3 (+ a venv) rather than
+# actions/setup-python, which does not provision on self-hosted macOS.
 # See README "CI/CD: a Lakebase branch per PR".
 
 on:
@@ -58,11 +59,9 @@ jobs:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      PY: ./.ci-venv/bin/python
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - name: Guard - require Databricks secrets
         id: guard
         run: |
@@ -72,15 +71,18 @@ jobs:
           else
             echo "has_creds=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Install dependencies
+      - name: Set up Python venv (runner python3)
         if: steps.guard.outputs.has_creds == 'true'
-        run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
+        run: |
+          python3 -m venv .ci-venv
+          $PY -m pip install -q --upgrade pip
+          $PY -m pip install -q "databricks-sdk>=0.133" "psycopg[binary]"
       - name: Create Lakebase branch for this PR
         id: create
         if: steps.guard.outputs.has_creds == 'true'
         run: |
           set +e
-          python scripts/ci_lakebase_branch.py create --name "$CI_BRANCH_NAME"
+          $PY scripts/ci_lakebase_branch.py create --name "$CI_BRANCH_NAME"
           code=$?
           if [ "$code" = "75" ]; then
             echo "reachable=false" >> "$GITHUB_OUTPUT"
@@ -91,10 +93,10 @@ jobs:
           exit $code
       - name: Apply migrations to the branch
         if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
-        run: python scripts/ci_lakebase_branch.py migrate --name "$CI_BRANCH_NAME"
+        run: $PY scripts/ci_lakebase_branch.py migrate --name "$CI_BRANCH_NAME"
       - name: Smoke-test the RPC boundary on the branch
         if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
-        run: python scripts/ci_lakebase_branch.py test --name "$CI_BRANCH_NAME"
+        run: $PY scripts/ci_lakebase_branch.py test --name "$CI_BRANCH_NAME"
       - name: Summary
         if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
         run: echo "::notice title=Lakebase branch validated::$CI_BRANCH_NAME cloned from production, migrated and RPC-boundary tested; it will be deleted when this PR closes."
@@ -107,11 +109,9 @@ jobs:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      PY: ./.ci-venv/bin/python
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - name: Guard
         id: guard
         run: |
@@ -120,14 +120,17 @@ jobs:
           else
             echo "has_creds=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Install dependencies
+      - name: Set up Python venv (runner python3)
         if: steps.guard.outputs.has_creds == 'true'
-        run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
+        run: |
+          python3 -m venv .ci-venv
+          $PY -m pip install -q --upgrade pip
+          $PY -m pip install -q "databricks-sdk>=0.133" "psycopg[binary]"
       - name: Delete the PR's Lakebase branch
         if: steps.guard.outputs.has_creds == 'true'
         run: |
           set +e
-          python scripts/ci_lakebase_branch.py destroy --name "$CI_BRANCH_NAME"
+          $PY scripts/ci_lakebase_branch.py destroy --name "$CI_BRANCH_NAME"
           code=$?
           if [ "$code" = "75" ]; then
             echo "::warning title=Runner cannot reach workspace::Could not delete $CI_BRANCH_NAME from this runner (IP ACL). Delete it from an allowed network or self-hosted runner."
