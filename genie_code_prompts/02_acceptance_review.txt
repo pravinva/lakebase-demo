@@ -1,0 +1,48 @@
+Genie Code — Acceptance Review (end-to-end demo validation)
+
+Run only AFTER human review and approval of the SQL, and after placeholders are
+replaced. This pass validates the end-to-end demo against a real Lakebase
+Autoscaling database. Confirm you are pointed at the intended workspace/profile
+before proceeding.
+
+Preconditions
+  * SQL 001–004 reviewed; placeholders in 002 replaced with the real UiPath and
+    Databricks agent service-principal client IDs and the owner role.
+  * Environment variables from README step 1 exported.
+  * `python scripts/provision_lakebase.py --check-sdk` shows the Autoscaling
+    Postgres symbols, OR CDF/Data API were configured via the Lakebase UI.
+
+Steps
+  1. Compare the SDK signatures used in scripts/provision_lakebase.py against
+     the installed databricks-sdk version. Report any mismatch and adapt the
+     calls if needed (do not guess — verify against the installed SDK).
+  2. Apply the migrations with --apply (admin/project-owner session). NOTE the
+     order: 002 comes AFTER 003 because it grants EXECUTE on the RPCs 003 defines.
+       apply_sql.py --file sql/001_schema.sql --apply
+       apply_sql.py --file sql/003_rpc_functions.sql --apply
+       apply_sql.py --file sql/002_roles_and_grants.sql --apply
+       apply_sql.py --file sql/004_cdf_prereqs.sql --apply
+  3. Provision identity + Data API + CDF: run provision_lakebase.py dry-run,
+     review, then --apply.
+  4. Seed: run notebooks/01_seed_synthetic_claims.py.
+  5. Exercise the Data API as UiPath would: export DATA_API_URL, DBX_OAUTH_TOKEN,
+     CLAIM_ID, WORKFLOW_ID, then run scripts/test_data_api.sh. Confirm:
+       - read, write, task create, task complete all succeed;
+       - direct table access is DENIED (negative test 5 PASSes);
+       - cross-claim task completion is DENIED (negative test 6 PASSes).
+  6. Verify: run notebooks/02_verify_agent_audit_and_cdf.py for CLM-10001.
+     Confirm the final output shows:
+       - application audit events for BOTH reads and writes;
+       - CDF history rows for inserted/updated/deleted rows;
+       - request-id / trace-id correlation;
+       - the authenticated principal AND the logical agent id;
+       - the explicit note that CDF is write history, not read telemetry.
+  7. Demonstrate the shared-state narrative: show that after the UiPath agent
+     (uipath.document_review.v1) writes memory/completes its task on CLM-10001,
+     the Databricks agent (databricks.claim_triage.v1) reads the same claim-
+     scoped memory and continues the workflow.
+
+Output
+  A pass/fail acceptance report mapping each "What this package demonstrates"
+  bullet to concrete evidence (audit rows, CDF rows, denied attempts). Note any
+  deviation and stop for human review before remediation.

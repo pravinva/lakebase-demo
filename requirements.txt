@@ -1,0 +1,4 @@
+# Runtime dependencies for the scripts and notebooks.
+# The offline tests (tests/test_sql_static.py) need only the Python stdlib.
+psycopg[binary]>=3.1        # migration runner + notebook connections
+databricks-sdk>=0.30        # provision_lakebase.py (Autoscaling Data API/CDF needs a recent version)

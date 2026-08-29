@@ -1,0 +1,41 @@
+Genie Code — Scaffold Review (read-only, NO state-changing statements)
+
+You are reviewing the "Suncorp claims-center Lakebase agent-memory" starter
+package. Do NOT execute any state-changing SQL or provisioning in this pass.
+Inspect the package and report findings only.
+
+Context
+  * Target: Lakebase Autoscaling (project > branch > endpoint). Postgres schema
+    is `claims`. CDF history lands in a Unity Catalog catalog/schema.
+  * Runtime identities (UiPath + Databricks agent service principals) call
+    approved SECURITY DEFINER RPCs; they must NOT have direct table DML.
+  * audit_event is append-only application audit (reads included). CDF is
+    row-change (write) history only.
+
+Do this
+  1. Read every file under sql/, scripts/, notebooks/, tests/. Summarize the
+     object model (tables, RPCs, trigger, RLS) and the trust boundaries.
+  2. Confirm the least-privilege contract: the two runtime principals receive
+     USAGE + EXECUTE on the four RPCs only, and no SELECT/INSERT/UPDATE/DELETE
+     on claims.agent_memory / claims.task / claims.audit_event.
+  3. Confirm every RPC is SECURITY DEFINER, pins `search_path = claims, pg_temp`,
+     records the principal as session_user (not the definer), and performs
+     explicit claim / business-unit checks — especially the cross-claim guard in
+     rpc_complete_task.
+  4. Confirm audit_event has an append-only trigger blocking UPDATE/DELETE, and
+     that 004_cdf_prereqs.sql sets REPLICA IDENTITY FULL on the participating
+     tables.
+  5. Run the offline tests only: `python tests/test_sql_static.py` (or
+     `pytest tests/`). Report pass/fail. These touch no database.
+  6. Run the dry-runs only (they make NO changes):
+       python scripts/apply_sql.py --file sql/001_schema.sql
+       python scripts/apply_sql.py --file sql/002_roles_and_grants.sql   (must REFUSE: placeholders)
+       python scripts/provision_lakebase.py --check-sdk
+     Report output. Do not pass --apply.
+  7. List every placeholder that must be replaced before apply, and where.
+
+Output
+  A concise findings report: object model, trust boundaries, contract
+  confirmations, test/dry-run results, and the placeholder checklist. Flag any
+  discrepancy between the SQL, the grants, the scripts, and the notebooks. Do
+  NOT modify files in this pass unless explicitly asked.

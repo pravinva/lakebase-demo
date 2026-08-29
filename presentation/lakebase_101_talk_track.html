@@ -1,0 +1,218 @@
+<title>Lakebase 101 — Talk Track</title>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ink:#10262C; --soft:#3A555C; --muted:#5F7B82; --line:#D8E0E0;
+    --teal:#1B5161; --red:#FF3621; --green:#00A972; --bg:#FFFFFF; --panel:#F2F6F6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:"Barlow",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;font-size:11pt}
+  .wrap{max-width:7.4in;margin:0 auto;padding:0 .2in}
+  h1,h2,h3,h4{font-family:"Barlow Semi Condensed";margin:0;text-wrap:balance}
+  code,.mono{font-family:"IBM Plex Mono",monospace;font-size:.85em}
+
+  /* cover band */
+  .cover{background:linear-gradient(150deg,#0C1E23,#123640 70%);color:#EAF1F1;border-radius:14px;padding:.5in .55in;margin:.15in 0 .3in}
+  .cover .kick{font-family:"IBM Plex Mono";color:#8FCADA;letter-spacing:.12em;font-size:.72rem;text-transform:uppercase}
+  .cover h1{font-size:34pt;color:#fff;line-height:.95;margin:.12in 0 .06in}
+  .cover .sub{color:#C7D8DB;font-size:12pt;max-width:5.6in}
+  .cover .bar{width:56px;height:5px;background:var(--red);border-radius:2px;margin-top:.16in}
+
+  h2.sec{font-size:16pt;color:var(--teal);margin:.32in 0 .12in;padding-bottom:.06in;border-bottom:2px solid var(--line)}
+  p{margin:.35em 0}
+  .lead{color:var(--soft)}
+
+  /* timing table */
+  table{width:100%;border-collapse:collapse;margin:.1in 0 .2in;font-size:10.5pt}
+  th,td{text-align:left;padding:.09in .12in;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:"Barlow Semi Condensed";color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:8.5pt}
+  td.min{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--teal);font-weight:600}
+  tfoot td{font-weight:700;border-top:2px solid var(--line);border-bottom:none}
+
+  /* per-slide block */
+  .slide{border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;padding:.16in .22in;margin:.14in 0;break-inside:avoid}
+  .slide.demo{border-left-color:var(--red)}
+  .slide .hd{display:flex;align-items:baseline;gap:.12in;flex-wrap:wrap}
+  .slide .no{font-family:"Barlow Semi Condensed";font-weight:700;color:#fff;background:var(--teal);border-radius:6px;padding:.02in .12in;font-size:9.5pt}
+  .slide.demo .no{background:var(--red)}
+  .slide .ttl{font-family:"Barlow Semi Condensed";font-weight:700;font-size:12.5pt}
+  .slide .who{margin-left:auto;font-family:"IBM Plex Mono";font-size:8pt;color:var(--muted)}
+  .slide .time{font-family:"IBM Plex Mono";font-size:8pt;color:var(--red)}
+  .slide .say{margin:.08in 0 0}
+  .slide .cue{margin:.08in 0 0;font-size:9.5pt;color:var(--muted)}
+  .slide .cue b{color:var(--teal)}
+  .panel{background:var(--panel);border-radius:10px;padding:.16in .22in;margin:.14in 0;break-inside:avoid}
+  .panel h3{font-size:12pt;color:var(--teal);margin-bottom:.06in}
+  ol.run{margin:.05in 0 0 .2in;padding:0}
+  ol.run li{margin:.06in 0}
+  .r{color:var(--red);font-weight:600}
+  .g{color:var(--green);font-weight:600}
+  .qa{break-inside:avoid;margin:.12in 0}
+  .qa .q{font-weight:600;color:var(--ink)}
+  .qa .a{color:var(--soft);margin:.02in 0 0}
+  .foot{color:var(--muted);font-size:8.5pt;text-align:center;margin:.3in 0 .1in}
+  @media print{
+    @page{size:Letter;margin:.5in}
+    .cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .slide,.panel,.qa,tr{break-inside:avoid}
+    h2.sec{break-after:avoid}
+  }
+</style>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kick">Presenter Talk Track · 60 minutes</div>
+    <h1>Lakebase 101</h1>
+    <div class="sub">Suncorp AI CoE · CDP · Infosec — narration, timing, live-demo run-sheet, and Q&amp;A prep for the 25-slide deck.</div>
+    <div class="bar"></div>
+  </div>
+
+  <h2 class="sec">How to use this</h2>
+  <p class="lead">Each entry below maps to one slide: <b>SAY</b> is the spoken narration (paraphrase, don't read verbatim), <b>CUE</b> is the click/transition or demo action. Suggested speaker in the top-right of each block — adjust freely. Total budget is 60 minutes including a 15-minute live demo; keep Q&amp;A flowing throughout rather than saving it all for the end.</p>
+
+  <h2 class="sec">Timing plan</h2>
+  <table>
+    <thead><tr><th>Section</th><th>Slides</th><th>Lead</th><th>Time</th></tr></thead>
+    <tbody>
+      <tr><td>Open &amp; agenda</td><td>1–2</td><td>Host</td><td class="min">2 min</td></tr>
+      <tr><td>01 · Context</td><td>3–4</td><td>AI CoE (Kranthi)</td><td class="min">4 min</td></tr>
+      <tr><td>02 · Lakebase 101</td><td>5–8</td><td>AI CoE</td><td class="min">8 min</td></tr>
+      <tr><td>03 · Reference architecture — data flow</td><td>9–11</td><td>AI CoE + CDP</td><td class="min">8 min</td></tr>
+      <tr><td>04 · Security &amp; connectivity</td><td>12–15</td><td>Infosec + AI CoE</td><td class="min">12 min</td></tr>
+      <tr><td>05 · Lakeflow cost controls</td><td>16–17</td><td>CDP</td><td class="min">5 min</td></tr>
+      <tr><td>06 · Live demo (opens with branching)</td><td>18–22</td><td>SA / AI CoE</td><td class="min">15 min</td></tr>
+      <tr><td>Wrap-up &amp; next steps</td><td>23–24</td><td>Host</td><td class="min">4 min</td></tr>
+      <tr><td>Q&amp;A buffer</td><td>25</td><td>All</td><td class="min">2 min</td></tr>
+    </tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="min">60 min</td></tr></tfoot>
+  </table>
+
+  <h2 class="sec">Slide-by-slide narration</h2>
+
+  <div class="slide"><div class="hd"><span class="no">1</span><span class="ttl">Lakebase 101 — title</span><span class="who">Host · 0:30</span></div>
+    <p class="say"><b>SAY:</b> Welcome. Over the next hour we'll cover what Lakebase is, where it fits in your claims architecture, how the identity and security model works, how you control cost, and then a live demo of a Databricks agent and a UiPath agent sharing memory. We built the agenda around the three lenses in the room — AI CoE, CDP, and Infosec — so each of you gets the part you care about.</p>
+    <p class="cue"><b>CUE:</b> Advance once introductions are done.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">2</span><span class="ttl">What we will cover</span><span class="who">Host · 1:30</span></div>
+    <p class="say"><b>SAY:</b> Six parts. Context and the problem; Lakebase fundamentals; the data-flow architecture; security and connectivity — that's the Infosec-heavy part; cost controls for the CDP team; and the live demo. Please ask questions as we go — this is a working session, not a webinar.</p>
+    <p class="cue"><b>CUE:</b> Note the ~15-min demo and that the deck is a shareable reference afterward.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">3</span><span class="ttl">Section 01 — Context</span><span class="who">AI CoE · 0:20</span></div>
+    <p class="say"><b>SAY:</b> Let's start with why we're spending an hour on an operational database.</p>
+    <p class="cue"><b>CUE:</b> Quick section divider — keep moving.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">4</span><span class="ttl">Why Lakebase, why now</span><span class="who">AI CoE · 3:30</span></div>
+    <p class="say"><b>SAY:</b> Agentic workflows behave differently from analytics. An agent reads and writes small pieces of state constantly, and it needs answers in milliseconds — that's an OLTP pattern, not a warehouse scan. In claims specifically, a UiPath bot doing document review and a Databricks triage agent need to act on the <i>same</i> claim, from the same state. Historically that means standing up a separate Postgres, outside your governance. Lakebase changes that: Postgres speed, but inside Unity Catalog. The goal today is to get all three teams aligned on one pattern we can take toward production.</p>
+    <p class="cue"><b>CUE:</b> Invite one sentence from Infosec on why "outside governance" has been the blocker.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">5</span><span class="ttl">Section 02 — Lakebase 101</span><span class="who">AI CoE · 0:20</span></div>
+    <p class="say"><b>SAY:</b> So what actually is Lakebase.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">6</span><span class="ttl">What is Lakebase</span><span class="who">AI CoE · 4:00</span></div>
+    <p class="say"><b>SAY:</b> Lakebase is fully-managed PostgreSQL — real Postgres, open wire protocol — built into Databricks. It's serverless and autoscaling from half a compute unit up to 32, and it scales to zero when idle, so you're not paying for a database that's sitting quiet overnight. It supports git-style branching, so you can spin up an instant copy for dev or test. And because it's part of the platform, it's integrated with Unity Catalog. Net: millisecond reads and writes for apps, agents, and serving — with governance attached.</p>
+    <p class="cue"><b>CUE:</b> If asked "is this just RDS?" — no: it's serverless, scales to zero, branches, and is UC-governed. Park deeper cost talk for §05.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">7</span><span class="ttl">The autoscaling model &amp; where it fits</span><span class="who">AI CoE · 3:30</span></div>
+    <p class="say"><b>SAY:</b> The resource model is simple: a Project contains Branches, and each Branch has Endpoints — read-write and, if you want, read-only. It scales to zero and you pay for use. The most important idea on this slide is on the right: Lakebase is an <b>acceleration and serving layer, not your system of record</b>. Delta on Unity Catalog stays the source of truth. Lakebase is the low-latency mirror agents and apps talk to. Keep that boundary and the rest of the architecture falls into place.</p>
+    <p class="cue"><b>CUE:</b> This "not the SoR" line is the thesis — say it slowly. Transition: "so how does data get there?"</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">8</span><span class="ttl">Branching &amp; budget controls</span><span class="who">AI CoE + CDP · 2:00</span></div>
+    <p class="say"><b>SAY:</b> One capability to call out before the demo: branching. A Lakebase branch is a git-style, copy-on-write clone of production — schema, data and functions — created in seconds, for isolated dev, test or preview, then dropped when you are done. For CDP and Infosec the cost story is the reassuring part: a branch has no compute until you attach an endpoint, each endpoint has a capped CU and scales to zero, you gate who can create branches with project ACLs, and you tag plus attach a budget policy for chargeback. Teams self-serve safely without risking prod or the bill — and you will see this open the live demo.</p>
+    <p class="cue"><b>CUE:</b> Ties to §05 cost controls and to the demo opener (slide 18).</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">9</span><span class="ttl">Section 03 — Data flow</span><span class="who">AI CoE + CDP · 0:20</span></div>
+    <p class="say"><b>SAY:</b> Here's the reference data flow.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">10</span><span class="ttl">Source → Delta → Lakebase</span><span class="who">CDP · 4:00</span></div>
+    <p class="say"><b>SAY:</b> Left to right: source systems — policy, claims, CRM — land through Lakeflow ingest. Delta on Unity Catalog is the governed system of record: lineage, audit, everything you already trust. From there, <b>synced tables</b> mirror the curated Delta data into Lakebase. One detail worth knowing: a synced table has a primary key and an optional <b>timeseries key</b> — a monotonic column like an update timestamp — so Lakebase always holds the <i>latest</i> row per key even if updates arrive out of order. Then apps and agents read and write live state at low latency, and you can optionally write agent state back to Delta for analytics and retention.</p>
+    <p class="cue"><b>CUE:</b> CDP owns this slide. Flag that "latest-row-wins" is a correctness setting, not a cost setting — cost comes two slides on.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">11</span><span class="ttl">Acceleration layer, not system of record</span><span class="who">AI CoE · 3:00</span></div>
+    <p class="say"><b>SAY:</b> Reinforcing the boundary because it drives every design decision. Lakebase <i>is</i> a serving store, operational agent memory, app and session state, a governed mirror of Delta. It is <i>not</i> your source of truth, not a BI warehouse, not where you retain long-term history, and — critically for Infosec — not a way to bypass Unity Catalog. If someone proposes making Lakebase the only home for important data, that's the anti-pattern.</p>
+    <p class="cue"><b>CUE:</b> Good place to pause for questions before the security section.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">12</span><span class="ttl">Section 04 — Security &amp; connectivity</span><span class="who">Infosec · 0:20</span></div>
+    <p class="say"><b>SAY:</b> This is the part Infosec cares most about — how identity and access actually work.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">13</span><span class="ttl">Identity chain (documented, not live)</span><span class="who">Infosec · 3:30</span></div>
+    <p class="say"><b>SAY:</b> Here's the end-to-end identity chain, and it maps to your existing design doc. Entra ID authenticates the UiPath service principal. UiPath uses that to get a Databricks OAuth token for the service principal — machine-to-machine, no human in the loop. The service principal then mints a <b>short-lived</b> Lakebase database credential — a JWT that expires in about an hour — so there are <b>no static passwords</b> anywhere. That JWT maps to a specific Postgres role. So the identity you manage in Entra is the identity that shows up in the database. We're presenting this as reference architecture today; the live demo runs the same mechanics on the field-eng workspace.</p>
+    <p class="cue"><b>CUE:</b> Reference the Suncorp identity doc by name if it's in the room. Emphasize "short-lived, no static secrets."</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">14</span><span class="ttl">UC / Postgres RBAC boundary</span><span class="who">Infosec · 3:30</span></div>
+    <p class="say"><b>SAY:</b> There are two governance planes, and the same identity is governed on both. Unity Catalog governs the lakehouse side — catalogs, schemas, lineage, the CDF history tables, Databricks-level grants and audit. Postgres RBAC governs the live rows in Lakebase — roles, row-level security, grants, the security-definer functions, and the Data API role mapping. The takeaway: this isn't a governance gap you bolt onto later; both planes are first-class, and a principal is controlled on each side.</p>
+    <p class="cue"><b>CUE:</b> Set up the next slide: "within the Postgres plane, the key concept is role versus ownership."</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">15</span><span class="ttl">Role vs ownership</span><span class="who">Infosec + AI CoE · 4:00</span></div>
+    <p class="say"><b>SAY:</b> This is the concept that makes the demo make sense. The <b>authenticated principal</b> — the service principal or user — maps to a Postgres role that has least privilege: it can only <code>EXECUTE</code> a handful of approved functions, and it's recorded in every audit row. Separately, an <b>owner</b> role owns the tables and those functions. The functions run as the owner — that's <code>SECURITY DEFINER</code> — so they can do the work while the caller never gets direct access to tables. The runtime never owns anything. One field lesson baked in: to make this work over the HTTP Data API you must create the role with <code>databricks_create_role</code>, not the SDK — otherwise the API can't switch into it. We'll see all of this live.</p>
+    <p class="cue"><b>CUE:</b> Keep it conceptual here; the demo is the proof. Transition to cost.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">16</span><span class="ttl">Section 05 — Lakeflow cost controls</span><span class="who">CDP · 0:20</span></div>
+    <p class="say"><b>SAY:</b> Cost — this one's for the CDP team.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">17</span><span class="ttl">Sync policy &amp; cost attribution</span><span class="who">CDP · 4:00</span></div>
+    <p class="say"><b>SAY:</b> Two levers. First, the <b>sync policy</b>: a synced table runs in SNAPSHOT, TRIGGERED, or CONTINUOUS mode. Continuous is the freshest and the most expensive; triggered or scheduled is fine when batch freshness is acceptable. So you right-size the cadence to how fresh the data actually needs to be — that's the biggest cost dial. Second, <b>attribution</b>: tag your jobs, warehouses, and Lakebase so you can charge back by team or use case, and remember Lakebase scales to zero, which removes idle spend automatically. You monitor all of it through Unity Catalog system tables.</p>
+    <p class="cue"><b>CUE:</b> If pushed on numbers, offer a follow-up sizing exercise rather than quoting figures live.</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">18</span><span class="ttl">Section 06 — Live demo</span><span class="who">SA · 0:30</span></div>
+    <p class="say"><b>SAY:</b> Now the fun part. Everything we just described, running for real on the field-eng workspace. It's synthetic claims data and a non-production starter, but the security behaviors are real and verified.</p>
+    <p class="cue"><b>CUE:</b> Switch to the workspace / terminal. Have the run-sheet (below) open on a second screen.</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">19</span><span class="ttl">Branch production — start the demo</span><span class="who">SA · 2:00</span></div>
+    <p class="say"><b>SAY:</b> Before we touch agent memory, watch how a developer works safely. I create a <code>dev</code> branch off production — it is copy-on-write, so it is instant and it carries the whole thing: the same schema, the four RPCs, and the seeded claim memory. I give it a small, budget-safe endpoint that scales to zero. Now I can experiment on <code>dev</code> — write a new memory row, try a change — and production never sees it. When I am done, I throw the branch away. That is how teams self-serve without risking prod or the bill.</p>
+    <p class="cue"><b>CUE:</b> Run-sheet step 1. Verified live: <code>dev</code> cloned 5 tables + 4 RPCs + the seeded memory; a write on <code>dev</code> left production at 2 rows.</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">20</span><span class="ttl">Suncorp claims-center · agent memory</span><span class="who">SA · 2:00</span></div>
+    <p class="say"><b>SAY:</b> The setup: two agents — a UiPath document-review agent and a Databricks triage agent — and two synthetic claims in different business units. Shared memory lives in a Lakebase Postgres schema called <code>claims</code>. The rules: agents only call approved RPCs, never touch tables directly; every operation writes an append-only audit event, reads included; row changes flow to Unity Catalog through CDF; and cross-claim access is denied. Let me show you.</p>
+    <p class="cue"><b>CUE:</b> Begin the run-sheet. Narrate each result as it returns.</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">21</span><span class="ttl">Data API vs direct SQL</span><span class="who">SA · 3:00</span></div>
+    <p class="say"><b>SAY:</b> Two ways in, same governance. The <b>Data API</b> is PostgREST over HTTPS with an OAuth bearer token — no Postgres driver needed, which is exactly what a UiPath or low-code runtime wants. <b>Direct SQL</b> is psql or psycopg with the same OAuth credential — for apps, notebooks, migrations. Both hit the same roles, the same row-level security, the same RPCs. I'll use the Data API as the UiPath agent, and direct SQL as the Databricks agent, so you can see them sharing state.</p>
+    <p class="cue"><b>CUE:</b> Run-sheet steps 1–2 (UiPath write via Data API; Databricks read via SQL).</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">22</span><span class="ttl">What the demo proves</span><span class="who">SA · 5:00</span></div>
+    <p class="say"><b>SAY:</b> Here's the scorecard, and these are actual results. As the service principal over the Data API, read, write, and task RPCs all return <span class="g">200</span>. A cross-claim completion returns <span class="r">403</span> — denied, and it writes nothing. A direct table read returns <span class="r">403</span> — the runtime literally cannot bypass the RPCs. The audit trail records both the authenticated principal <i>and</i> the logical agent id, so you can tell who really called versus who they claimed to be. And the row-change history is queryable in Unity Catalog via CDF. Green is good here — including the two 403s, because denial is the point.</p>
+    <p class="cue"><b>CUE:</b> Run-sheet steps 3–6. Land the "403 is a feature" line.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">23</span><span class="ttl">Security takeaways</span><span class="who">Host / Infosec · 2:00</span></div>
+    <p class="say"><b>SAY:</b> To summarize the security posture: runtimes get EXECUTE on approved RPCs only — no direct table writes; row-level security is fail-closed, so direct access returns nothing or is denied; the RPCs enforce explicit claim and business-unit checks in one transaction with the audit write; audit captures the real principal and the logical agent; and CDF gives you immutable write-history in Unity Catalog, with reads audited separately in the app layer.</p>
+    <p class="cue"><b>CUE:</b> Invite Infosec to confirm this meets their bar, or name the gaps.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">24</span><span class="ttl">Recommendations &amp; next steps</span><span class="who">Host · 2:00</span></div>
+    <p class="say"><b>SAY:</b> Concretely: use separate service principals per agent runtime so attribution is strong; keep Lakebase as the serving layer and Delta as the system of record; standardize the identity chain with Infosec — Entra to OAuth to Postgres role; set the sync cadence and cost tags with CDP; and review the SQL and RPC pattern with security before anything goes to production. We have a reviewed starter package that implements all of this.</p>
+    <p class="cue"><b>CUE:</b> Assign owners and a follow-up date live if you can.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">25</span><span class="ttl">Questions &amp; discussion</span><span class="who">All · 2:00</span></div>
+    <p class="say"><b>SAY:</b> That's the pattern end to end. What questions do you have — and where do you want to go next?</p>
+    <p class="cue"><b>CUE:</b> Use the Q&amp;A prep below.</p></div>
+
+  <h2 class="sec">Live-demo run-sheet</h2>
+  <div class="panel">
+    <h3>Exact sequence (slides 18–22)</h3>
+    <ol class="run">
+      <li><b>Branch production (the opener).</b> <code>databricks postgres create-branch projects/suncorp-claims-center dev --json '{"spec":{"source_branch":".../branches/production","no_expiry":true}}'</code>. Show it is READY in seconds. Connect to the <code>dev</code> endpoint and show it already has the <code>claims</code> schema, the 4 RPCs, and the seeded memory (copy-on-write clone). Write a throwaway row on <code>dev</code> (<code>rpc_write_memory('CLM-10001',...,'dev.experiment',...)</code>), then show <b>production is unchanged</b> (still 2 memory rows, no <code>dev.experiment</code>). Note the endpoint inherits the small 1 CU cap and scales to zero. Finish with <code>delete-branch .../dev</code> — gone, storage reclaimed. <i>(Verified live end-to-end.)</i></li>
+      <li><b>Show the shape.</b> Back on production, briefly show the <code>claims</code> schema + the four RPCs (<code>rpc_read_memory</code>, <code>rpc_write_memory</code>, <code>rpc_create_task</code>, <code>rpc_complete_task</code>). Point out: no table grants to the agents.</li>
+      <li><b>UiPath agent · Data API (HTTPS + OAuth).</b> As the service principal, <code>rpc_write_memory</code> + <code>rpc_create_task</code> on <code>CLM-10001</code>. Expect <span class="g">200 OK</span>. Narrate: "no Postgres driver — just a bearer token."</li>
+      <li><b>Databricks agent · direct SQL.</b> <code>rpc_read_memory</code> for <code>CLM-10001</code> — returns the memory the UiPath agent just wrote. Narrate: "two runtimes, one governed memory."</li>
+      <li><b>Negative — cross-claim.</b> Same SP tries <code>rpc_complete_task</code> on a <code>CLM-10001</code> task while asserting <code>CLM-10002</code> → <span class="r">403 — cross-claim access denied</span>, zero writes.</li>
+      <li><b>Negative — direct table.</b> Same SP tries <code>SELECT * FROM claims.agent_memory</code> → <span class="r">403 — permission denied for table</span>. "The RPCs are the only door."</li>
+      <li><b>Audit + CDF.</b> Show <code>audit_event</code> rows: <code>principal</code> = the SP app-id, <code>agent_id</code> = the logical agent. Then show the CDF history table in Unity Catalog (<code>suncorp_cdf.suncorp_claims_cdf</code>) returning the row changes.</li>
+    </ol>
+    <p class="cue" style="margin-top:.1in"><b>Fallback:</b> if the Data API round-trip has any hiccup live, run the same RPCs over direct SQL as the SP — the boundary behavior (200s and 403s) is identical and already verified.</p>
+  </div>
+
+  <h2 class="sec">Q&amp;A prep — likely questions</h2>
+  <div class="qa"><p class="q">Is Lakebase our new system of record?</p><p class="a">No. Delta on Unity Catalog remains the source of truth. Lakebase is the low-latency serving/acceleration layer; anything durable is retained in Delta.</p></div>
+  <div class="qa"><p class="q">How does a UiPath bot authenticate — do we store a password?</p><p class="a">No static secrets. Entra authenticates the service principal, which gets a Databricks OAuth token and mints a short-lived (~1h) Lakebase credential that maps to a Postgres role.</p></div>
+  <div class="qa"><p class="q">Can an agent read another claim's data?</p><p class="a">No. The RPCs enforce explicit claim/business-unit checks and deny cross-claim calls (demonstrated: 403). Direct table access is also denied by row-level security + least-privilege grants.</p></div>
+  <div class="qa"><p class="q">What controls cost?</p><p class="a">Mainly the sync policy — SNAPSHOT/TRIGGERED/CONTINUOUS — matched to required freshness, plus scale-to-zero on idle endpoints. Tag jobs/warehouses/Lakebase for chargeback; monitor via UC system tables.</p></div>
+  <div class="qa"><p class="q">What's the timeseries key?</p><p class="a">A synced-table setting: a monotonic column (e.g. update timestamp) that keeps the latest row per primary key when updates arrive out of order. It's a correctness setting on the Delta→Lakebase mirror — not used by the agent's own write-path memory, which upserts directly.</p></div>
+  <div class="qa"><p class="q">Where do we see what an agent did, and who really did it?</p><p class="a">Every operation writes an append-only audit event with the authenticated principal and the logical agent id. Writes also appear in Unity Catalog CDF; reads are captured in the app audit, not CDF.</p></div>
+  <div class="qa"><p class="q">Why RPCs instead of just granting table access?</p><p class="a">RPCs let business logic and the audit write commit in one transaction, keep least privilege (EXECUTE only), and enforce claim boundaries centrally. Runtimes never hold table DML.</p></div>
+  <div class="qa"><p class="q">What happens on scale-to-zero — is there a cold start?</p><p class="a">Idle endpoints scale to zero and wake on the next connection; there's a brief wake latency. For always-hot paths, set a minimum CU above zero.</p></div>
+
+  <p class="foot">Lakebase 101 · Suncorp AI CoE, CDP &amp; Infosec — presenter talk track · synthetic, non-production reference · © 2026 Databricks, Inc.</p>
+</div>

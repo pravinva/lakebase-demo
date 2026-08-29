@@ -1,0 +1,624 @@
+<title>Lakebase 101</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#EEF2F2;      /* teal-biased neutral, not pure grey */
+    --surface:#FFFFFF;
+    --surface-2:#F5F8F8;
+    --ink:#10262C;         /* deep teal near-black */
+    --ink-soft:#3A555C;
+    --muted:#5F7B82;
+    --line:#D3DEDE;
+    --teal:#1B5161;        /* primary teal */
+    --teal-bright:#2E7C8F;
+    --red:#FF3621;         /* databricks red, sparingly */
+    --green:#00A972;       /* verified / enforced */
+    --hex:rgba(27,81,97,.06);
+    --shadow:0 1px 0 var(--line), 0 18px 40px -28px rgba(16,38,44,.5);
+    font-family:"Barlow",system-ui,-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0A1619; --surface:#0F2329; --surface-2:#122A30;
+      --ink:#EAF1F1; --ink-soft:#B7CBCE; --muted:#7F9BA1; --line:#22383E;
+      --teal:#5FA7B8; --teal-bright:#8FCADA; --red:#FF6552; --green:#3BD69B;
+      --hex:rgba(143,202,218,.06);
+      --shadow:0 1px 0 var(--line), 0 20px 50px -30px #000;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A1619; --surface:#0F2329; --surface-2:#122A30;
+    --ink:#EAF1F1; --ink-soft:#B7CBCE; --muted:#7F9BA1; --line:#22383E;
+    --teal:#5FA7B8; --teal-bright:#8FCADA; --red:#FF6552; --green:#3BD69B;
+    --hex:rgba(143,202,218,.06);
+    --shadow:0 1px 0 var(--line), 0 20px 50px -30px #000;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--ground); color:var(--ink);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  .deck{height:100vh;width:100vw;position:relative}
+
+  /* ---- slide shell ---- */
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; justify-content:center;
+    padding:clamp(2.2rem,5vw,5.5rem) clamp(2.2rem,7vw,8rem);
+    background:var(--ground);
+  }
+  .slide.active{display:flex}
+  @media (prefers-reduced-motion:no-preference){
+    .slide.active > *{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+    .slide.active > *:nth-child(2){animation-delay:.05s}
+    .slide.active > *:nth-child(3){animation-delay:.1s}
+    .slide.active > *:nth-child(4){animation-delay:.15s}
+    @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  }
+  .eyebrow{
+    font-family:"Barlow Semi Condensed";font-weight:600;
+    text-transform:uppercase;letter-spacing:.18em;font-size:clamp(.7rem,1vw,.85rem);
+    color:var(--teal);margin:0 0 1rem
+  }
+  .eyebrow .dot{color:var(--red)}
+  h1,h2{font-family:"Barlow Semi Condensed";font-weight:700;text-wrap:balance;margin:0}
+  .slide h2{font-size:clamp(1.9rem,4.4vw,3.2rem);line-height:1.02;letter-spacing:-.01em;color:var(--ink)}
+  .lead{font-size:clamp(1.05rem,1.7vw,1.4rem);color:var(--ink-soft);max-width:60ch;margin:1.2rem 0 0;line-height:1.45}
+
+  /* ---- bullets ---- */
+  ul.bullets{list-style:none;margin:1.8rem 0 0;padding:0;max-width:74ch;display:flex;flex-direction:column;gap:.95rem}
+  ul.bullets li{position:relative;padding-left:1.7rem;font-size:clamp(1rem,1.5vw,1.28rem);line-height:1.4;color:var(--ink)}
+  ul.bullets li::before{content:"";position:absolute;left:0;top:.55em;width:.6rem;height:.6rem;background:var(--red);transform:rotate(45deg)}
+  ul.bullets li b, ul.bullets li code{color:var(--teal)}
+  code,.mono{font-family:"IBM Plex Mono",monospace;font-size:.86em}
+
+  /* ---- two column ---- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.6rem);margin-top:1.9rem}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(1.2rem,2vw,1.8rem);box-shadow:var(--shadow)}
+  .card h3{font-family:"Barlow Semi Condensed";font-weight:600;font-size:clamp(1.1rem,1.7vw,1.4rem);margin:0 0 .9rem;color:var(--teal);letter-spacing:.01em}
+  .card.warn h3{color:var(--red)}
+  .card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.6rem}
+  .card li{position:relative;padding-left:1.3rem;font-size:clamp(.95rem,1.25vw,1.12rem);line-height:1.35;color:var(--ink-soft)}
+  .card li::before{content:"";position:absolute;left:0;top:.5em;width:.42rem;height:.42rem;border-radius:50%;background:var(--teal-bright)}
+  .card.warn li::before{background:var(--red)}
+
+  /* ---- flow / chain ---- */
+  .flow{display:flex;align-items:stretch;gap:.5rem;margin-top:2rem;flex-wrap:wrap}
+  .flow .step{flex:1 1 0;min-width:130px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1rem 1.05rem;box-shadow:var(--shadow)}
+  .flow .step .k{font-family:"IBM Plex Mono";font-size:.72rem;color:var(--muted);letter-spacing:.05em}
+  .flow .step .t{font-family:"Barlow Semi Condensed";font-weight:600;font-size:clamp(1rem,1.4vw,1.2rem);color:var(--ink);margin-top:.2rem;line-height:1.05}
+  .flow .step .d{font-size:.86rem;color:var(--ink-soft);margin-top:.45rem;line-height:1.3}
+  .flow .arrow{align-self:center;color:var(--red);font-weight:700;font-size:1.4rem;flex:0 0 auto}
+  .flow .step.sor{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),var(--shadow)}
+
+  /* ---- proof tiles + table ---- */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.8rem}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;box-shadow:var(--shadow)}
+  .tile .n{font-family:"Barlow Semi Condensed";font-weight:700;font-size:clamp(1.4rem,2.4vw,2rem);color:var(--green);line-height:1}
+  .tile .l{font-size:.9rem;color:var(--ink-soft);margin-top:.4rem}
+  .proof{width:100%;border-collapse:collapse;margin-top:1.7rem;font-size:clamp(.92rem,1.3vw,1.12rem)}
+  .proof th,.proof td{text-align:left;padding:.72rem .9rem;border-bottom:1px solid var(--line)}
+  .proof th{font-family:"Barlow Semi Condensed";font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:.75rem}
+  .proof td:first-child{color:var(--ink)}
+  .proof td.mono{color:var(--ink-soft)}
+  .chip{display:inline-flex;align-items:center;gap:.4rem;font-family:"IBM Plex Mono";font-size:.82rem;font-weight:500;padding:.2rem .6rem;border-radius:999px;white-space:nowrap}
+  .chip.ok{color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent)}
+  .chip.enf{color:var(--teal-bright);background:color-mix(in srgb,var(--teal-bright) 16%,transparent)}
+  .chip::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:currentColor}
+
+  /* ---- section divider (dark, hexagon motif, numbered) ---- */
+  .slide.section{
+    background:
+      radial-gradient(120% 120% at 88% 12%, rgba(255,54,33,.16), transparent 46%),
+      linear-gradient(160deg,#0C1E23,#123039 70%);
+    color:#EAF1F1;
+    background-color:#0C1E23;
+  }
+  .slide.section::after{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:linear-gradient(var(--hex) 1px,transparent 1px),linear-gradient(90deg,var(--hex) 1px,transparent 1px);
+    background-size:46px 46px;-webkit-mask-image:linear-gradient(105deg,transparent 40%,#000);mask-image:linear-gradient(105deg,transparent 40%,#000)
+  }
+  .slide.section .num{font-family:"Barlow Semi Condensed";font-weight:700;font-size:clamp(4rem,13vw,10rem);line-height:.8;color:transparent;-webkit-text-stroke:2px rgba(143,202,218,.5);position:relative}
+  .slide.section .eyebrow{color:#8FCADA}
+  .slide.section h2{color:#fff;margin-top:.6rem;font-size:clamp(2.2rem,6vw,4.2rem)}
+  .slide.section .lead{color:#B7CBCE}
+  .slide.section .accent{width:64px;height:5px;background:var(--red);margin-top:1.4rem;border-radius:2px}
+
+  /* ---- title slide ---- */
+  .slide.cover{
+    background:linear-gradient(155deg,#0B1D22,#123640 68%);background-color:#0B1D22;color:#EAF1F1;justify-content:center
+  }
+  .slide.cover::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:linear-gradient(rgba(143,202,218,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(143,202,218,.06) 1px,transparent 1px);
+    background-size:52px 52px;-webkit-mask-image:radial-gradient(90% 90% at 80% 20%,#000,transparent 75%);mask-image:radial-gradient(90% 90% at 80% 20%,#000,transparent 75%)}
+  .slide.cover .brandline{display:flex;align-items:center;gap:.7rem;font-family:"IBM Plex Mono";font-size:.85rem;letter-spacing:.06em;color:#8FCADA;position:relative}
+  .slide.cover .hex{width:16px;height:18px;background:var(--red);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+  .slide.cover h1{font-size:clamp(3rem,10vw,7.5rem);color:#fff;line-height:.92;margin-top:1.1rem;position:relative}
+  .slide.cover .sub{font-size:clamp(1.1rem,2vw,1.6rem);color:#C7D8DB;max-width:52ch;margin-top:1.3rem;line-height:1.4;position:relative}
+  .slide.cover .meta{margin-top:2.2rem;display:flex;gap:.6rem;flex-wrap:wrap;position:relative}
+  .slide.cover .pill{font-family:"IBM Plex Mono";font-size:.8rem;border:1px solid rgba(143,202,218,.4);color:#C7D8DB;padding:.35rem .8rem;border-radius:999px}
+
+  /* ---- closing ---- */
+  .slide.closing{background:linear-gradient(155deg,#0B1D22,#123640 68%);background-color:#0B1D22;color:#EAF1F1;justify-content:center}
+  .slide.closing h2{color:#fff;font-size:clamp(2.4rem,7vw,5rem)}
+  .slide.closing .lead{color:#C7D8DB}
+  .slide.closing .accent{width:64px;height:5px;background:var(--red);margin-top:1.4rem;border-radius:2px}
+
+  /* ---- chrome: progress, nav, footer ---- */
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--red);width:0;z-index:40;transition:width .35s ease}
+  .footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+    padding:.6rem clamp(1.2rem,4vw,2.4rem);font-family:"IBM Plex Mono";font-size:.72rem;color:var(--muted);z-index:30;pointer-events:none}
+  .slide.section ~ .footer{}
+  .nav{position:fixed;bottom:.4rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;z-index:35}
+  .nav button{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:38px;height:32px;cursor:pointer;font-size:1rem;display:grid;place-items:center;transition:.15s}
+  .nav button:hover{border-color:var(--teal)}
+  .nav button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .theme-btn{position:fixed;top:.7rem;right:.8rem;z-index:40;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);border-radius:8px;height:32px;padding:0 .7rem;cursor:pointer;font-family:"IBM Plex Mono";font-size:.72rem}
+  .theme-btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .counter{color:var(--ink-soft)}
+
+  @media (max-width:720px){
+    .cols,.tiles{grid-template-columns:1fr}
+    .flow{flex-direction:column}.flow .arrow{transform:rotate(90deg)}
+  }
+  /* ---- print: one slide per page for PDF handout ---- */
+  @media print{
+    html,body{overflow:visible;height:auto}
+    .progress,.nav,.footer,.theme-btn{display:none!important}
+    .deck{height:auto}
+    .slide{position:relative;display:flex!important;height:100vh;page-break-after:always;inset:auto}
+    .slide.active > *{animation:none!important}
+  }
+</style>
+
+<div class="progress" id="progress"></div>
+<button class="theme-btn" id="themeBtn" aria-label="Toggle theme">◐ theme</button>
+
+<div class="deck" id="deck">
+
+  <!-- 1 COVER -->
+  <section class="slide cover active">
+    <div class="brandline"><span class="hex"></span> DATABRICKS &nbsp;·&nbsp; LAKEBASE</div>
+    <h1>Lakebase&nbsp;101</h1>
+    <div class="sub">Operational Postgres on the Lakehouse — a shared, governed memory layer for Databricks &amp; UiPath agents.</div>
+    <div class="meta">
+      <span class="pill">Suncorp AI CoE</span><span class="pill">CDP</span>
+      <span class="pill">Infosec</span><span class="pill">60 minutes</span>
+    </div>
+  </section>
+
+  <!-- 2 AGENDA -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Agenda · 60 minutes</p>
+    <h2>What we will cover</h2>
+    <ul class="bullets">
+      <li><b>Context</b> — why this session, and what problem Lakebase solves for claims</li>
+      <li><b>Lakebase 101</b> — what it is, the autoscaling model, and where it fits</li>
+      <li><b>Reference architecture</b> — data flow: Source → Delta → Lakebase</li>
+      <li><b>Security &amp; connectivity</b> — the identity chain and the UC / Postgres RBAC boundary</li>
+      <li><b>Lakeflow cost controls</b> — sync schedule, timeseries key, cost tagging</li>
+      <li><b>Live demo</b> — Data API vs direct SQL, and role vs ownership</li>
+    </ul>
+  </section>
+
+  <!-- 3 SECTION 01 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 01</p>
+    <div class="num">01</div>
+    <h2>Context — why this session</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 4 WHY -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Context</p>
+    <h2>Why Lakebase, why now</h2>
+    <ul class="bullets">
+      <li>Agentic workflows need <b>low-latency operational state</b>, not just analytics</li>
+      <li>In claims, <b>Databricks agents and UiPath agents must share the same claim state</b></li>
+      <li>Lakebase gives <b>Postgres speed</b> with <b>Unity Catalog governance</b></li>
+      <li>Goal: align <b>AI CoE, CDP and Infosec</b> on one safe reference pattern</li>
+      <li>Outcome: a reviewed blueprint you can extend toward production</li>
+    </ul>
+  </section>
+
+  <!-- 5 SECTION 02 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 02</p>
+    <div class="num">02</div>
+    <h2>Lakebase 101</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 6 WHAT IS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
+    <h2>What is Lakebase</h2>
+    <ul class="bullets">
+      <li>Fully-managed <b>PostgreSQL (OLTP)</b> built into Databricks</li>
+      <li>Serverless <b>Autoscaling: 0.5–32 CU</b>, scales to zero when idle</li>
+      <li><b>Git-style branching</b> for instant dev / test copies</li>
+      <li>Unity Catalog integration over the <b>open Postgres protocol</b></li>
+      <li><b>Millisecond</b> reads and writes for apps, agents and serving</li>
+    </ul>
+  </section>
+
+  <!-- 7 AUTOSCALING / FIT -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
+    <h2>The autoscaling model &amp; where it fits</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Resource model</h3>
+        <ul>
+          <li><code>Project › Branch › Endpoint</code></li>
+          <li>Read-write + read-only endpoints</li>
+          <li>Scale-to-zero — pay for what you use</li>
+          <li>Branch from a point in time</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Design principle</h3>
+        <ul>
+          <li>An <b>acceleration / serving</b> layer</li>
+          <li><b>Not</b> the system of record</li>
+          <li>Delta stays the source of truth</li>
+          <li>A low-latency mirror of governed data</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7b BRANCHING & BUDGET (concept) -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
+    <h2>Branching &amp; budget controls</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Branch like git</h3>
+        <ul>
+          <li>Copy-on-write clones of prod in seconds</li>
+          <li>Isolated dev, test &amp; preview</li>
+          <li>Carries schema, data, RPCs — a full clone</li>
+          <li>Drop when done — no cleanup drift</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Costs stay controlled</h3>
+        <ul>
+          <li>No compute until an endpoint is attached</li>
+          <li>Cap CU + scale-to-zero per endpoint</li>
+          <li>Gate who can create via project ACLs</li>
+          <li>Tag + budget policy for chargeback</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">Let teams self-serve branches without risking production or the bill — we'll see this open the live demo.</p>
+  </section>
+
+  <!-- 8 SECTION 03 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 03</p>
+    <div class="num">03</div>
+    <h2>Reference architecture — data flow</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 9 FLOW -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Reference architecture</p>
+    <h2>Source → Delta → Lakebase</h2>
+    <div class="flow">
+      <div class="step"><div class="k">SOURCE</div><div class="t">Systems</div><div class="d">Policy, claims, CRM via Lakeflow ingest</div></div>
+      <div class="arrow">→</div>
+      <div class="step sor"><div class="k">GOVERNED SoR</div><div class="t">Delta · Unity Catalog</div><div class="d">Source of truth, lineage &amp; audit</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">SYNC</div><div class="t">Synced tables</div><div class="d">Curated Delta mirrored into Lakebase</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">SERVE</div><div class="t">Lakebase · Agents</div><div class="d">Low-latency read / write of live state</div></div>
+    </div>
+    <p class="lead">Synced tables use a <b>primary key + timeseries key</b> to keep the latest row per key. Optional write-back flows agent state from Lakebase back to Delta for analytics.</p>
+  </section>
+
+  <!-- 10 ACCEL NOT SOR -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Reference architecture</p>
+    <h2>Acceleration layer, not system of record</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Lakebase IS</h3>
+        <ul>
+          <li>A low-latency serving store</li>
+          <li>Operational agent memory</li>
+          <li>App state, features, sessions</li>
+          <li>A governed mirror of Delta</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h3>Lakebase is NOT</h3>
+        <ul>
+          <li>The source of truth</li>
+          <li>A warehouse for BI / history</li>
+          <li>Where you retain long-term data</li>
+          <li>A bypass around UC governance</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 SECTION 04 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 04</p>
+    <div class="num">04</div>
+    <h2>Security &amp; connectivity</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 12 IDENTITY CHAIN -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity</p>
+    <h2>Identity chain <span style="font-weight:500;color:var(--muted);font-size:.6em">(documented — not shown live)</span></h2>
+    <div class="flow">
+      <div class="step"><div class="k">IdP</div><div class="t">Entra ID</div><div class="d">Authenticates the UiPath service principal</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">OAUTH M2M</div><div class="t">Databricks token</div><div class="d">SP obtains a workspace OAuth token</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">SHORT-LIVED</div><div class="t">Lakebase JWT</div><div class="d">SP mints a database credential (no static password)</div></div>
+      <div class="arrow">→</div>
+      <div class="step sor"><div class="k">MAPPED</div><div class="t">Postgres role</div><div class="d">JWT <code>.sub</code> maps to a matching role</div></div>
+    </div>
+    <p class="lead">Follows the Suncorp identity design doc. Presented as reference architecture; the live demo uses the field-eng workspace.</p>
+  </section>
+
+  <!-- 13 UC/PG RBAC -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity</p>
+    <h2>UC / Postgres RBAC boundary</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Unity Catalog plane</h3>
+        <ul>
+          <li>Catalogs, schemas, lineage</li>
+          <li>CDF history tables</li>
+          <li>Databricks grants + audit</li>
+          <li>Governs Delta &amp; CDF outputs</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Postgres RBAC plane</h3>
+        <ul>
+          <li>Roles, RLS, <code>GRANT</code> / <code>REVOKE</code></li>
+          <li>Security-definer RPCs</li>
+          <li>Data API role mapping</li>
+          <li>Governs live Lakebase rows</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">Two planes, one identity — the same principal is governed differently on each side of the boundary.</p>
+  </section>
+
+  <!-- 14 ROLE VS OWNERSHIP -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity · demo concept</p>
+    <h2>Role vs ownership</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Authenticated principal</h3>
+        <ul>
+          <li>The SP / user identity</li>
+          <li>Mapped to a Postgres role</li>
+          <li>Least privilege: <code>EXECUTE</code> only</li>
+          <li>Recorded in every audit row</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Object owner</h3>
+        <ul>
+          <li>Owns the tables and RPCs</li>
+          <li><code>SECURITY DEFINER</code> bypasses RLS</li>
+          <li>Runtime never owns tables</li>
+          <li>Data API needs <code>databricks_create_role</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 SECTION 05 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 05</p>
+    <div class="num">05</div>
+    <h2>Lakeflow cost controls</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 16 COST -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakeflow cost controls</p>
+    <h2>Sync policy &amp; cost attribution</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Sync policy + cadence</h3>
+        <ul>
+          <li><code>SNAPSHOT</code> / <code>TRIGGERED</code> / <code>CONTINUOUS</code> modes</li>
+          <li>Continuous = freshest, highest cost</li>
+          <li>Triggered or scheduled for batch freshness</li>
+          <li>Right-size cadence to the freshness need</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Cost attribution</h3>
+        <ul>
+          <li>Tag jobs, warehouses &amp; Lakebase</li>
+          <li>Chargeback by team / use case</li>
+          <li><b>Scale-to-zero</b> cuts idle spend</li>
+          <li>Monitor via UC system tables</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 SECTION 06 -->
+  <section class="slide section">
+    <p class="eyebrow">Section 06 · live</p>
+    <div class="num">06</div>
+    <h2>Live demo — field-eng workspace</h2>
+    <div class="accent"></div>
+  </section>
+
+  <!-- 18 BRANCHING (demo opener) -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Live demo · start here</p>
+    <h2>Branch production — clone it, safely</h2>
+    <ul class="bullets">
+      <li>Create a <code>dev</code> branch from production — <b>instant, copy-on-write</b></li>
+      <li>It carries the same schema, RPCs and agent memory — a full point-in-time clone</li>
+      <li>Attach a <b>budget-safe</b> endpoint — small CU cap + scale-to-zero</li>
+      <li>Experiment on <code>dev</code>; <b>production is untouched</b> — true isolation</li>
+      <li>Throw the branch away when done — storage only until an endpoint runs</li>
+    </ul>
+    <p class="lead">Verified live: <code>dev</code> cloned 5 tables + 4 RPCs + the seeded memory; a write on <code>dev</code> left production at 2 rows.</p>
+  </section>
+
+  <!-- 19 DEMO OVERVIEW -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Live demo</p>
+    <h2>Suncorp claims-center · agent memory</h2>
+    <ul class="bullets">
+      <li>Two agents share claim-scoped memory: <code>databricks.claim_triage.v1</code> &amp; <code>uipath.document_review.v1</code></li>
+      <li>Runtime identities call <b>approved RPCs</b> — never touching tables directly</li>
+      <li>Every operation writes an <b>append-only audit event</b> (reads included)</li>
+      <li><b>CDF</b> exposes row changes as Unity Catalog Delta history</li>
+      <li><b>Cross-claim access is denied</b> — boundaries fail closed</li>
+    </ul>
+  </section>
+
+  <!-- 19 DATA API VS SQL -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Live demo</p>
+    <h2>Data API vs direct SQL</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Data API (PostgREST)</h3>
+        <ul>
+          <li>HTTPS + OAuth bearer token</li>
+          <li>RPC + CRUD, <b>no Postgres driver</b></li>
+          <li>Ideal for UiPath / low-code</li>
+          <li>Role via <code>databricks_create_role</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Direct SQL</h3>
+        <ul>
+          <li><code>psql</code> / <code>psycopg</code> + OAuth cred</li>
+          <li>Full SQL and transactions</li>
+          <li>Apps, notebooks, migrations</li>
+          <li>Same roles, RLS and RPCs</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 20 PROOF -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Live demo · verified</p>
+    <h2>What the demo proves</h2>
+    <table class="proof">
+      <thead><tr><th>Check</th><th>Path</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Read / write / task RPCs</td><td class="mono">Data API · as service principal</td><td><span class="chip ok">200 OK</span></td></tr>
+        <tr><td>Cross-claim completion</td><td class="mono">Data API · as service principal</td><td><span class="chip enf">403 · enforced</span></td></tr>
+        <tr><td>Direct table access</td><td class="mono">Data API · as service principal</td><td><span class="chip enf">403 · enforced</span></td></tr>
+        <tr><td>Principal vs logical agent</td><td class="mono">Append-only audit event</td><td><span class="chip ok">both recorded</span></td></tr>
+        <tr><td>Row-change history</td><td class="mono">Unity Catalog CDF</td><td><span class="chip ok">queryable</span></td></tr>
+      </tbody>
+    </table>
+    <p class="lead">Green means the boundary behaved correctly — including the two <code>403</code>s, where denial is the intended, verified outcome.</p>
+  </section>
+
+  <!-- 21 SECURITY TAKEAWAYS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Wrap-up</p>
+    <h2>Security takeaways</h2>
+    <ul class="bullets">
+      <li>Runtime principals get <code>EXECUTE</code> on approved RPCs only — <b>no table DML</b></li>
+      <li>RLS is enabled <b>fail-closed</b>; direct access returns nothing or is denied</li>
+      <li>Security-definer RPCs enforce explicit <b>claim + business-unit</b> checks</li>
+      <li>Audit records both the <b>authenticated principal</b> and the <b>logical agent id</b></li>
+      <li>CDF gives immutable <b>write history</b> in UC; reads are audited separately</li>
+    </ul>
+  </section>
+
+  <!-- 22 NEXT STEPS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Wrap-up</p>
+    <h2>Recommendations &amp; next steps</h2>
+    <ul class="bullets">
+      <li>Use <b>separate service principals per agent runtime</b> for strong attribution</li>
+      <li>Keep Lakebase as the <b>serving layer</b>; Delta remains the system of record</li>
+      <li>Standardize the identity chain with <b>Infosec</b> (Entra → OAuth → PG role)</li>
+      <li>Set sync cadence &amp; cost tags with <b>CDP</b> for freshness and chargeback</li>
+      <li>Review the SQL + RPC pattern with <b>security</b> before production</li>
+    </ul>
+  </section>
+
+  <!-- 23 CLOSING -->
+  <section class="slide closing">
+    <p class="eyebrow" style="color:#8FCADA">Thank you</p>
+    <h2>Questions &amp; discussion</h2>
+    <p class="lead">Lakebase 101 · Suncorp AI CoE, CDP &amp; Infosec — the claims-center agent-memory demo is a synthetic, non-production starter, reviewed end-to-end on the field-eng workspace.</p>
+    <div class="accent"></div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">‹</button>
+  <button id="next" aria-label="Next slide">›</button>
+</div>
+<div class="footer">
+  <span>Lakebase 101 · Suncorp AI CoE</span>
+  <span class="counter"><span id="cur">1</span> / <span id="tot">1</span></span>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0, tot = slides.length;
+  var curEl = document.getElementById('cur'), totEl = document.getElementById('tot');
+  var prog = document.getElementById('progress');
+  totEl.textContent = tot;
+
+  function show(n){
+    i = Math.max(0, Math.min(tot-1, n));
+    slides.forEach(function(s,x){ s.classList.toggle('active', x===i); });
+    curEl.textContent = i+1;
+    prog.style.width = ((i)/(tot-1)*100)+'%';
+    if(history.replaceState) history.replaceState(null,'','#'+(i+1));
+  }
+  function next(){ show(i+1); }
+  function prev(){ show(i-1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ show(0); } else if(e.key==='End'){ show(tot-1); }
+    else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();} else {document.exitFullscreen&&document.exitFullscreen();} }
+  });
+  // theme toggle: system -> light -> dark -> system
+  var order=['','light','dark'], ti=0, root=document.documentElement;
+  try{ var saved=localStorage.getItem('lb101-theme'); if(saved!==null){ ti=order.indexOf(saved); if(ti<0)ti=0; if(saved) root.setAttribute('data-theme',saved);} }catch(e){}
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    ti=(ti+1)%order.length; var v=order[ti];
+    if(v) root.setAttribute('data-theme',v); else root.removeAttribute('data-theme');
+    try{ localStorage.setItem('lb101-theme', v); }catch(e){}
+  });
+  var start = parseInt((location.hash||'#1').slice(1),10); show(isNaN(start)?0:start-1);
+})();
+</script>
