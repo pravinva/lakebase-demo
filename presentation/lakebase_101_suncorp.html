@@ -462,6 +462,33 @@
     </div>
   </section>
 
+  <!-- 16b GOVERNED SELF-SERVICE (operating model) -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Operating model</p>
+    <h2>Governed self-service branching</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Platform team owns the policy</h3>
+        <ul>
+          <li>Define one branch template — capped CU, scale-to-zero</li>
+          <li>Run branch creation via a service principal</li>
+          <li>Attach a budget policy and cost tags</li>
+          <li>Monitor CU-hours in Unity Catalog system tables</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Data teams self-serve</h3>
+        <ul>
+          <li>Request a branch through automation, not tickets</li>
+          <li>Receive an isolated clone of production</li>
+          <li>Compute is bounded and scales to zero</li>
+          <li>Branch expires automatically when work ends</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead"><b style="color:var(--red)">Recommendation.</b> Provision branches through a platform-owned automation that applies a governed template — data teams self-serve while the platform team controls compute size, autoscaling, and lifecycle centrally.</p>
+  </section>
+
   <!-- 17 SECTION 06 -->
   <section class="slide section">
     <p class="eyebrow">Section 06 · live</p>
