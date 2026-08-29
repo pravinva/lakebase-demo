@@ -67,7 +67,7 @@
   <div class="cover">
     <div class="kick">Presenter Talk Track · 60 minutes</div>
     <h1>Lakebase 101</h1>
-    <div class="sub">Suncorp AI CoE · CDP · Infosec — narration, timing, live-demo run-sheet, and Q&amp;A prep for the 25-slide deck.</div>
+    <div class="sub">Suncorp AI CoE · CDP · Infosec — narration, timing, live-demo run-sheet, and Q&amp;A prep for the 26-slide deck.</div>
     <div class="bar"></div>
   </div>
 
@@ -83,10 +83,10 @@
       <tr><td>02 · Lakebase 101</td><td>5–8</td><td>AI CoE</td><td class="min">8 min</td></tr>
       <tr><td>03 · Reference architecture — data flow</td><td>9–11</td><td>AI CoE + CDP</td><td class="min">8 min</td></tr>
       <tr><td>04 · Security &amp; connectivity</td><td>12–15</td><td>Infosec + AI CoE</td><td class="min">12 min</td></tr>
-      <tr><td>05 · Lakeflow cost controls</td><td>16–17</td><td>CDP</td><td class="min">5 min</td></tr>
-      <tr><td>06 · Live demo (opens with branching)</td><td>18–22</td><td>SA / AI CoE</td><td class="min">15 min</td></tr>
-      <tr><td>Wrap-up &amp; next steps</td><td>23–24</td><td>Host</td><td class="min">4 min</td></tr>
-      <tr><td>Q&amp;A buffer</td><td>25</td><td>All</td><td class="min">2 min</td></tr>
+      <tr><td>05 · Lakeflow cost controls</td><td>16–18</td><td>CDP</td><td class="min">5 min</td></tr>
+      <tr><td>06 · Live demo (opens with branching)</td><td>19–23</td><td>SA / AI CoE</td><td class="min">15 min</td></tr>
+      <tr><td>Wrap-up &amp; next steps</td><td>24–25</td><td>Host</td><td class="min">4 min</td></tr>
+      <tr><td>Q&amp;A buffer</td><td>26</td><td>All</td><td class="min">2 min</td></tr>
     </tbody>
     <tfoot><tr><td colspan="3">Total</td><td class="min">60 min</td></tr></tfoot>
   </table>
@@ -157,35 +157,39 @@
     <p class="say"><b>SAY:</b> Two levers. First, the <b>sync policy</b>: a synced table runs in SNAPSHOT, TRIGGERED, or CONTINUOUS mode. Continuous is the freshest and the most expensive; triggered or scheduled is fine when batch freshness is acceptable. So you right-size the cadence to how fresh the data actually needs to be — that's the biggest cost dial. Second, <b>attribution</b>: tag your jobs, warehouses, and Lakebase so you can charge back by team or use case, and remember Lakebase scales to zero, which removes idle spend automatically. You monitor all of it through Unity Catalog system tables.</p>
     <p class="cue"><b>CUE:</b> If pushed on numbers, offer a follow-up sizing exercise rather than quoting figures live.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">18</span><span class="ttl">Section 06 — Live demo</span><span class="who">SA · 0:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">18</span><span class="ttl">Governed self-service branching</span><span class="who">CDP + AI CoE · 2:30</span></div>
+    <p class="say"><b>SAY:</b> This is the operating model that lets data science teams branch on their own while the platform team keeps control of compute and cost. The split is clean. The platform team owns the policy: one branch template with a capped compute size and scale-to-zero, branch creation run by a service principal, a budget policy and cost tags on the project, and CU-hours tracked in system tables. The data teams self-serve: they request a branch through automation rather than a ticket, receive an isolated clone of production, work on compute that is bounded and scales to zero, and the branch expires when the work ends. Recommendation: provision branches through a platform-owned automation that applies the governed template, so the platform team sets compute size, autoscaling, and lifecycle once and data teams self-serve within those limits.</p>
+    <p class="cue"><b>CUE:</b> The live demo section is a working reference of this automation (create, verify, teardown).</p></div>
+
+  <div class="slide demo"><div class="hd"><span class="no">19</span><span class="ttl">Section 06 — Live demo</span><span class="who">SA · 0:30</span></div>
     <p class="say"><b>SAY:</b> Now the fun part. Everything we just described, running for real on the field-eng workspace. It's synthetic claims data and a non-production starter, but the security behaviors are real and verified.</p>
     <p class="cue"><b>CUE:</b> Switch to the workspace / terminal. Have the run-sheet (below) open on a second screen.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">19</span><span class="ttl">Branch production — start the demo</span><span class="who">SA · 2:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">20</span><span class="ttl">Branch production — start the demo</span><span class="who">SA · 2:00</span></div>
     <p class="say"><b>SAY:</b> Before we touch agent memory, watch how a developer works safely. I create a <code>dev</code> branch off production — it is copy-on-write, so it is instant and it carries the whole thing: the same schema, the four RPCs, and the seeded claim memory. I give it a small, budget-safe endpoint that scales to zero. Now I can experiment on <code>dev</code> — write a new memory row, try a change — and production never sees it. When I am done, I throw the branch away. That is how teams self-serve without risking prod or the bill.</p>
     <p class="cue"><b>CUE:</b> Run-sheet step 1. Verified live: <code>dev</code> cloned 5 tables + 4 RPCs + the seeded memory; a write on <code>dev</code> left production at 2 rows.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">20</span><span class="ttl">Suncorp claims-center · agent memory</span><span class="who">SA · 2:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">21</span><span class="ttl">Suncorp claims-center · agent memory</span><span class="who">SA · 2:00</span></div>
     <p class="say"><b>SAY:</b> The setup: two agents — a UiPath document-review agent and a Databricks triage agent — and two synthetic claims in different business units. Shared memory lives in a Lakebase Postgres schema called <code>claims</code>. The rules: agents only call approved RPCs, never touch tables directly; every operation writes an append-only audit event, reads included; row changes flow to Unity Catalog through CDF; and cross-claim access is denied. Let me show you.</p>
     <p class="cue"><b>CUE:</b> Begin the run-sheet. Narrate each result as it returns.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">21</span><span class="ttl">Data API vs direct SQL</span><span class="who">SA · 3:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">22</span><span class="ttl">Data API vs direct SQL</span><span class="who">SA · 3:00</span></div>
     <p class="say"><b>SAY:</b> Two ways in, same governance. The <b>Data API</b> is PostgREST over HTTPS with an OAuth bearer token — no Postgres driver needed, which is exactly what a UiPath or low-code runtime wants. <b>Direct SQL</b> is psql or psycopg with the same OAuth credential — for apps, notebooks, migrations. Both hit the same roles, the same row-level security, the same RPCs. I'll use the Data API as the UiPath agent, and direct SQL as the Databricks agent, so you can see them sharing state.</p>
     <p class="cue"><b>CUE:</b> Run-sheet steps 1–2 (UiPath write via Data API; Databricks read via SQL).</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">22</span><span class="ttl">What the demo proves</span><span class="who">SA · 5:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">23</span><span class="ttl">What the demo proves</span><span class="who">SA · 5:00</span></div>
     <p class="say"><b>SAY:</b> Here's the scorecard, and these are actual results. As the service principal over the Data API, read, write, and task RPCs all return <span class="g">200</span>. A cross-claim completion returns <span class="r">403</span> — denied, and it writes nothing. A direct table read returns <span class="r">403</span> — the runtime literally cannot bypass the RPCs. The audit trail records both the authenticated principal <i>and</i> the logical agent id, so you can tell who really called versus who they claimed to be. And the row-change history is queryable in Unity Catalog via CDF. Green is good here — including the two 403s, because denial is the point.</p>
     <p class="cue"><b>CUE:</b> Run-sheet steps 3–6. Land the "403 is a feature" line.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">23</span><span class="ttl">Security takeaways</span><span class="who">Host / Infosec · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">24</span><span class="ttl">Security takeaways</span><span class="who">Host / Infosec · 2:00</span></div>
     <p class="say"><b>SAY:</b> To summarize the security posture: runtimes get EXECUTE on approved RPCs only — no direct table writes; row-level security is fail-closed, so direct access returns nothing or is denied; the RPCs enforce explicit claim and business-unit checks in one transaction with the audit write; audit captures the real principal and the logical agent; and CDF gives you immutable write-history in Unity Catalog, with reads audited separately in the app layer.</p>
     <p class="cue"><b>CUE:</b> Invite Infosec to confirm this meets their bar, or name the gaps.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">24</span><span class="ttl">Recommendations &amp; next steps</span><span class="who">Host · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">25</span><span class="ttl">Recommendations &amp; next steps</span><span class="who">Host · 2:00</span></div>
     <p class="say"><b>SAY:</b> Concretely: use separate service principals per agent runtime so attribution is strong; keep Lakebase as the serving layer and Delta as the system of record; standardize the identity chain with Infosec — Entra to OAuth to Postgres role; set the sync cadence and cost tags with CDP; and review the SQL and RPC pattern with security before anything goes to production. We have a reviewed starter package that implements all of this.</p>
     <p class="cue"><b>CUE:</b> Assign owners and a follow-up date live if you can.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">25</span><span class="ttl">Questions &amp; discussion</span><span class="who">All · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">26</span><span class="ttl">Questions &amp; discussion</span><span class="who">All · 2:00</span></div>
     <p class="say"><b>SAY:</b> That's the pattern end to end. What questions do you have — and where do you want to go next?</p>
     <p class="cue"><b>CUE:</b> Use the Q&amp;A prep below.</p></div>
 

@@ -219,6 +219,69 @@ accumulated changes) into the new schema, and the history tables become
 queryable. Verified end-to-end: agent-memory and task change history land in
 `<cdf_catalog>.suncorp_claims_cdf` and are readable from SQL.
 
+## CI/CD: a Lakebase branch per PR
+
+`.github/workflows/lakebase-pr-branch.yml` + `scripts/ci_lakebase_branch.py`
+demonstrate **ephemeral database environments** with Lakebase branching — the
+operational-DB analogue of preview apps:
+
+1. **validate** (always runs, no secrets) — offline static safety / contract
+   checks + migration dry-runs.
+2. **ephemeral-branch** (on PR open / update) — creates a **copy-on-write branch
+   off production** named `ci-pr-<n>` (already migrated, since it's a clone) and
+   verifies it: read/write works and **cross-claim access is denied** — all on a
+   throwaway clone that never touches production.
+3. **teardown** (on PR close / merge) — deletes the branch (cascades its endpoint).
+
+The runtime service principal is least-privilege (EXECUTE on the RPCs only), so
+it can create the branch clone and exercise the RPC boundary but cannot run DDL.
+Migration SQL changes are validated statically in the **validate** job; applying
+a *new* migration to a branch is done with an owner / deploy identity
+(`ci_lakebase_branch.py migrate`), not the runtime principal.
+
+Every PR gets an isolated, production-like database to validate schema / RPC
+changes before merge, then it is reclaimed automatically. The teardown job
+deletes the branch when the PR closes, and the CI endpoint is small +
+scale-to-zero.
+
+### One-time setup for the live jobs
+
+The `validate` job needs no configuration. The live branch jobs need a **service
+principal with `CAN CREATE` / `CAN MANAGE` on the Lakebase project** and three
+repo secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `DATABRICKS_HOST` | workspace URL, e.g. `https://<workspace>.cloud.databricks.com` |
+| `DATABRICKS_CLIENT_ID` | the service principal's application / client ID |
+| `DATABRICKS_CLIENT_SECRET` | an OAuth secret for that service principal |
+
+```bash
+gh secret set DATABRICKS_HOST         --repo <owner>/<repo> --body "https://<workspace>.cloud.databricks.com"
+gh secret set DATABRICKS_CLIENT_ID    --repo <owner>/<repo> --body "<sp-application-id>"
+gh secret set DATABRICKS_CLIENT_SECRET --repo <owner>/<repo> --body "<sp-oauth-secret>"
+```
+
+Without the secrets, the live jobs skip cleanly and only `validate` runs.
+
+### Runners and workspace IP access lists
+
+If the workspace enforces an **IP access list** (common in production, and true
+of the demo sandbox), GitHub-hosted runners are blocked — the SDK authenticates
+fine but the API call is rejected (`Source IP … is blocked by Databricks IP
+ACL`). The workflow treats this as a clean skip with guidance rather than a
+failure. To run the live branch jobs, use a **self-hosted runner inside the
+allowed network** and point the jobs at it by setting the repo variable
+`CI_RUNNER` to its label:
+
+```bash
+gh variable set CI_RUNNER --repo <owner>/<repo> --body "<self-hosted-runner-label>"
+```
+
+The pipeline itself is verified end-to-end from an allowed network:
+`create` (branch off production) → `migrate` (001/003/004) → `test` (14 offline
+checks + live RPC read/write and cross-claim-denied on the branch) → `destroy`.
+
 ## Design notes
 
 - Use separate service principals for UiPath and Databricks agent runtimes where
