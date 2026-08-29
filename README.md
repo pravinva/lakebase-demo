@@ -39,6 +39,10 @@ direct DML on the memory, task, or audit tables.
 | `notebooks/02_verify_agent_audit_and_cdf.py` | demo timeline; audit reads vs CDF writes |
 | `tests/test_sql_static.py` | offline safety and contract checks |
 | `genie_code_prompts/` | prompts for Genie Code to review, adapt, and validate |
+| `databricks.yml` + `resources/*.postgres.yml` | **bundle** — `postgres_*` infrastructure (project, roles, database), reconciled by `bundle deploy` |
+| `src/migrations/V*__*.sql` | **bundle** — versioned schema migrations applied by the `schema_deploy` job on `bundle run` |
+| `src/deploy_schema.py` | migration runner (ordered, OAuth, `schema_version` tracking, `{{var}}` substitution) |
+| `src/schema_diff.py` | compare schema across two branches (PR validation) |
 
 ## Object model (at a glance)
 
@@ -52,6 +56,46 @@ direct DML on the memory, task, or audit tables.
 
 The four RPCs — `rpc_read_memory`, `rpc_write_memory`, `rpc_create_task`,
 `rpc_complete_task` — are the only surface granted to runtime principals.
+
+## Migrations & promotion (recommended): Declarative Automation Bundles
+
+Change management for Lakebase follows the Databricks-recommended bundle pattern,
+split on the **declarative line**:
+
+- **Above the line** (`resources/*.postgres.yml`, reconciled by `bundle deploy`)
+  — the `postgres_*` infrastructure: project, branch, endpoint, roles, database.
+- **Below the line** (`src/migrations/V*__*.sql`, applied by the `schema_deploy`
+  job on `bundle run`) — the application schema: tables, RPCs, grants — as
+  ordered, idempotent, versioned migrations tracked in a `schema_version` table.
+
+Promotion is a change of target; each environment is its own Lakebase project:
+
+```bash
+databricks bundle deploy -t dev -p <profile>              # provision infrastructure
+databricks bundle run schema_deploy -t dev -p <profile>   # apply migrations
+# promote by switching target (same code):
+databricks bundle deploy -t stage -p <profile> && databricks bundle run schema_deploy -t stage -p <profile>
+databricks bundle deploy -t prod  -p <profile> && databricks bundle run schema_deploy -t prod  -p <profile>
+```
+
+**Branching is for validation, not promotion.** Fork production, apply the new
+migration on the fork, diff it, then promote the *migration file* through the
+targets and discard the fork:
+
+```bash
+databricks postgres create-branch projects/<id> feature-x \
+  --json '{"spec":{"source_branch":"projects/<id>/branches/production","ttl":"3600s"}}' -p <profile>
+databricks bundle run schema_deploy -t dev --params branch=feature-x -p <profile>
+python src/schema_diff.py --project-id <id> --left feature-x --right production
+```
+
+Notes (verified live): `postgres_*` bundle support is Beta — pin the CLI
+(validated on **v1.14.1**) and `databricks-sdk>=0.96` in the job environment
+(serverless ships an older SDK without `w.postgres`). A CI service principal
+needs `CAN_MANAGE` on the project and a declared role with `DATABRICKS_SUPERUSER`
+membership to run DDL. Set `purge_on_delete` only on ephemeral targets. The
+older `scripts/apply_sql.py` remains as a local, single-file helper; the bundle
+job is the promotion path.
 
 ## Prerequisites
 
@@ -219,11 +263,22 @@ accumulated changes) into the new schema, and the history tables become
 queryable. Verified end-to-end: agent-memory and task change history land in
 `<cdf_catalog>.suncorp_claims_cdf` and are readable from SQL.
 
-## CI/CD: a Lakebase branch per PR
+## CI/CD: validation on a branch, promotion by target
 
-`.github/workflows/lakebase-pr-branch.yml` + `scripts/ci_lakebase_branch.py`
-demonstrate **ephemeral database environments** with Lakebase branching — the
-operational-DB analogue of preview apps:
+Two paths, matching the recommended pattern:
+
+- **Promotion** (the source of truth for what ships) — `.github/workflows/lakebase-promote.yml`
+  runs `bundle deploy` + `bundle run schema_deploy` against a target (dev → stage
+  → prod). This is how schema changes reach an environment; see
+  "Migrations & promotion" above.
+- **PR validation** (never the promotion path) — `.github/workflows/lakebase-pr-branch.yml`
+  + `scripts/ci_lakebase_branch.py` fork production into a short-lived Lakebase
+  branch, exercise it, and (with `src/schema_diff.py`) surface the schema delta
+  for review, then discard the fork. The migration *file* is what gets promoted,
+  not the branch.
+
+The PR workflow (ephemeral database environments — the operational-DB analogue
+of preview apps):
 
 1. **validate** (always runs, no secrets) — offline static safety / contract
    checks + migration dry-runs.
