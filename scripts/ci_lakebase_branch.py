@@ -22,7 +22,7 @@ Config via env (with demo defaults):
   LAKEBASE_SOURCE_BRANCH    default: production
   LAKEBASE_DB_NAME          default: claims_center
   LAKEBASE_PG_SCHEMA        default: claims
-  BRANCH_TTL_SECONDS        default: 604800 (7d) -- stray CI branches self-expire
+(branches are created no-expiry; the teardown job deletes them on PR close.)
 """
 from __future__ import annotations
 
@@ -39,7 +39,6 @@ PROJECT = os.environ.get("LAKEBASE_PROJECT_ID", "suncorp-claims-center")
 SOURCE  = os.environ.get("LAKEBASE_SOURCE_BRANCH", "production")
 DBNAME  = os.environ.get("LAKEBASE_DB_NAME", "claims_center")
 SCHEMA  = os.environ.get("LAKEBASE_PG_SCHEMA", "claims")
-TTL     = os.environ.get("BRANCH_TTL_SECONDS", "604800") + "s"
 HERE    = os.path.dirname(os.path.abspath(__file__))
 ROOT    = os.path.dirname(HERE)
 
@@ -84,7 +83,9 @@ def _conn(w, endpoint_name, host, dbname):
 def cmd_create(args):
     w = _client()
     name = args.name
-    spec = pg.BranchSpec(source_branch=branch_path(SOURCE), ttl=TTL)
+    # no_expiry=True keeps it simple (avoids Duration serialization); the
+    # teardown job deletes the branch when the PR closes.
+    spec = pg.BranchSpec(source_branch=branch_path(SOURCE), no_expiry=True)
     try:
         w.postgres.create_branch(project_path(), pg.Branch(spec=spec), branch_id=name)
         print(f"[create] requested branch {name} from {SOURCE}")

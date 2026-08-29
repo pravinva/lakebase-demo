@@ -234,8 +234,9 @@ operational-DB analogue of preview apps:
 3. **teardown** (on PR close / merge) — deletes the branch (cascades its endpoint).
 
 Every PR gets an isolated, production-like database to validate schema / RPC
-changes before merge, then it is reclaimed automatically. CI branches carry a
-TTL so strays self-expire, and the CI endpoint is small + scale-to-zero.
+changes before merge, then it is reclaimed automatically. The teardown job
+deletes the branch when the PR closes, and the CI endpoint is small +
+scale-to-zero.
 
 ### One-time setup for the live jobs
 
