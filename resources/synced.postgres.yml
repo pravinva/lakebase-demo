@@ -1,0 +1,28 @@
+# Above the declarative line -- and the clearest illustration of why the line
+# follows OWNERSHIP. A synced table creates a REAL Postgres table, but Databricks
+# derives its columns and types from the Delta source and the managed sync
+# pipeline owns the contents. You name the source, primary key, and sync mode --
+# you never author its schema. That is why a postgres_* resource type can exist
+# for it, and cannot for an app-owned table like claims.claim (which ships as a
+# migration, below the line).
+#
+# This reads a Unity Catalog Delta table into appdb as a read-only serving table
+# the agents can query. Treat it as read-only apart from indexes; never also
+# write it as a migration -- that interferes with the sync.
+#
+# EXAMPLE: it needs a real Delta source table -- set var.synced_source to a table
+# that exists before you `bundle deploy`. new_pipeline_spec (not an existing
+# pipeline id) keeps it portable across workspaces.
+resources:
+  postgres_synced_tables:
+    claim_risk:
+      synced_table_id: ${var.pg_catalog}.public.claim_risk_synced
+      source_table_full_name: ${var.synced_source}
+      primary_key_columns: ["claim_id"]
+      scheduling_policy: SNAPSHOT
+      postgres_database: ${var.db_name}
+      branch: ${resources.postgres_projects.app.id}/branches/${var.branch}
+      create_database_objects_if_missing: true
+      new_pipeline_spec:
+        storage_catalog: ${var.pg_catalog}
+        storage_schema: pipeline_storage

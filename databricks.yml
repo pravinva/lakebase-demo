@@ -38,6 +38,12 @@ variables:
   ci_sp_application_id:
     description: Application id of the CI service principal that deploys and runs the job.
     default: ""
+  pg_catalog:
+    description: Unity Catalog catalog the synced-table example registers under.
+    default: main
+  synced_source:
+    description: Delta source table for the synced-table example (catalog.schema.table).
+    default: main.default.claim_risk_source
 
 # The workspace host comes from your CLI profile (`-p <profile>`) or the
 # DATABRICKS_HOST env var, so nothing environment-specific is committed here.
