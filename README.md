@@ -39,7 +39,8 @@ direct DML on the memory, task, or audit tables.
 | `notebooks/02_verify_agent_audit_and_cdf.py` | demo timeline; audit reads vs CDF writes |
 | `tests/test_sql_static.py` | offline safety and contract checks |
 | `genie_code_prompts/` | prompts for Genie Code to review, adapt, and validate |
-| `databricks.yml` + `resources/*.postgres.yml` | **bundle** — `postgres_*` infrastructure (project, roles, database), reconciled by `bundle deploy` |
+| `databricks.yml` + `resources/lakebase.postgres.yml` | **bundle** — `postgres_*` infrastructure (project, roles, database), reconciled by `bundle deploy` |
+| `resources/synced.postgres.yml` | **bundle** — a `postgres_synced_tables` example (above the line: Databricks derives its columns from a Delta source) |
 | `src/migrations/V*__*.sql` | **bundle** — versioned schema migrations applied by the `schema_deploy` job on `bundle run` |
 | `src/deploy_schema.py` | migration runner (ordered, OAuth, `schema_version` tracking, `{{var}}` substitution) |
 | `src/schema_diff.py` | compare schema across two branches (PR validation) |

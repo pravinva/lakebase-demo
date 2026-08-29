@@ -516,6 +516,31 @@
     <p class="lead"><b style="color:var(--red)">Recommendation.</b> Ship Lakebase changes with Declarative Automation Bundles — infrastructure as <code>postgres_*</code> resources, schema as versioned migrations, promoted by target; branch to validate a change, then promote the migration file, not the branch.</p>
   </section>
 
+  <!-- 16d DECLARATIVE LINE — SIMPLE EXAMPLE -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Change management · example</p>
+    <h2>The declarative line — a simple example</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>You author the columns → below</h3>
+        <ul>
+          <li>An <code>orders</code> table your app owns</li>
+          <li>You write the <code>CREATE TABLE</code> in a migration (<code>V1__…sql</code>)</li>
+          <li>Applied by <code>bundle run</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Databricks derives the columns → above</h3>
+        <ul>
+          <li>A <code>customer_segments</code> table synced from a Delta table</li>
+          <li>You name the <b>source + key</b>, never the columns</li>
+          <li>Declared as <code>postgres_synced_tables</code>; <code>bundle deploy</code></li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead"><b style="color:var(--red)">Rule of thumb.</b> If you write the columns, it ships as a migration (below the line). If Databricks derives or manages them, it is a <code>postgres_*</code> resource (above the line).</p>
+  </section>
+
   <!-- 17 SECTION 06 -->
   <section class="slide section">
     <p class="eyebrow">Section 06 · live</p>
