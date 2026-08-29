@@ -1,0 +1,72 @@
+# Declarative Automation Bundle for the Suncorp claims-center Lakebase demo.
+#
+# Two layers, split on the "declarative line":
+#   above  — postgres_* infrastructure (project, roles, database), reconciled by
+#            `databricks bundle deploy`.
+#   below  — the application schema, shipped as versioned migration files in
+#            src/migrations/ and applied by the `schema_deploy` job on
+#            `databricks bundle run`.
+#
+# Promotion is a change of target: deploy + run against dev, stage, then prod,
+# each its own Lakebase project selected by the project_id variable.
+#
+# NOTE: postgres_* bundle support is Beta; pin your CLI in CI. Validated with a
+# recent Databricks CLI. Lakebase Autoscaling.
+bundle:
+  name: lakebase-cicd
+
+include:
+  - resources/*.yml
+
+variables:
+  project_id:
+    description: Lakebase project id for this environment (lowercase, hyphens).
+  project_display_name:
+    description: Human-readable project name.
+  branch:
+    description: Lakebase branch the migrations apply to.
+    default: production
+  db_name:
+    description: Postgres database name that holds the claims schema.
+    default: appdb
+  uipath_sp:
+    description: UiPath runtime service-principal application/client id (for V3 grants).
+    default: ""
+  dbx_agent_sp:
+    description: Databricks agent runtime service-principal application/client id (for V3 grants).
+    default: ""
+  ci_sp_application_id:
+    description: Application id of the CI service principal that deploys and runs the job.
+    default: ""
+
+# The workspace host comes from your CLI profile (`-p <profile>`) or the
+# DATABRICKS_HOST env var, so nothing environment-specific is committed here.
+targets:
+  dev:
+    default: true
+    mode: development
+    variables:
+      project_id: lakebase-demo-dev
+      project_display_name: "Lakebase demo (dev)"
+    # Ephemeral: hard-delete on `bundle destroy` so the slug is released
+    # immediately (no 7-day reservation), which an ephemeral CI env needs.
+    resources:
+      postgres_projects:
+        app:
+          purge_on_delete: true
+
+  stage:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/<ci-service-principal>/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      project_id: lakebase-demo-stage
+      project_display_name: "Lakebase demo (stage)"
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/<ci-service-principal>/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      project_id: lakebase-demo-prod
+      project_display_name: "Lakebase demo (prod)"

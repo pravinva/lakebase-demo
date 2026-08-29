@@ -1,0 +1,41 @@
+# Above the declarative line: postgres_* infrastructure, reconciled by
+# `databricks bundle deploy`. Creating the project also gives you a production
+# branch, a primary read-write endpoint, a databricks_postgres database, and an
+# owner role tied to the creator; the role/database below sit alongside those.
+resources:
+  postgres_projects:
+    app:
+      project_id: ${var.project_id}
+      display_name: ${var.project_display_name}
+      pg_version: 17
+      # Grant the CI service principal management on the project so it can
+      # deploy and run the schema job. (Set var.ci_sp_application_id in CI.)
+      permissions:
+        - service_principal_name: ${var.ci_sp_application_id}
+          level: CAN_MANAGE
+
+  postgres_roles:
+    # Application owner role, declared explicitly so the bundle is portable
+    # (the auto-created owner role's id derives from the creator's identity).
+    app_owner:
+      parent: ${resources.postgres_projects.app.id}/branches/${var.branch}
+      role_id: app-owner
+      postgres_role: app_owner
+
+    # CI deploy identity. identity_type ties it to a Databricks service
+    # principal; DATABRICKS_SUPERUSER membership lets it run the schema DDL
+    # (public schema does not grant CREATE to a bare role).
+    ci_deployer:
+      parent: ${resources.postgres_projects.app.id}/branches/${var.branch}
+      role_id: ci-deployer
+      postgres_role: ${var.ci_sp_application_id}
+      identity_type: SERVICE_PRINCIPAL
+      membership_roles:
+        - DATABRICKS_SUPERUSER
+
+  postgres_databases:
+    app_db:
+      parent: ${resources.postgres_projects.app.id}/branches/${var.branch}
+      database_id: app-db
+      postgres_database: ${var.db_name}
+      role: ${resources.postgres_roles.app_owner.id}

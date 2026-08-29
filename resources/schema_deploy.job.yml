@@ -1,0 +1,39 @@
+# Below the declarative line: the schema is applied by this job, which runs the
+# ordered migration files in src/migrations against the branch's read-write
+# endpoint using a short-lived OAuth token.
+resources:
+  jobs:
+    schema_deploy:
+      name: "Lakebase schema deploy (${var.project_id})"
+      parameters:
+        - name: branch          # settable per run, e.g. --params branch=<fork>
+          default: ${var.branch}
+        - name: uipath_sp
+          default: ${var.uipath_sp}
+        - name: dbx_agent_sp
+          default: ${var.dbx_agent_sp}
+      tasks:
+        - task_key: apply_migrations
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/deploy_schema.py
+            parameters:
+              - "--project-id"
+              - "${var.project_id}"
+              - "--database"
+              - "${var.db_name}"
+              - "--branch"
+              - "{{job.parameters.branch}}"
+              - "--migrations-dir"
+              - "src/migrations"
+              - "--var"
+              - "uipath_sp={{job.parameters.uipath_sp}}"
+              - "--var"
+              - "dbx_agent_sp={{job.parameters.dbx_agent_sp}}"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - psycopg2-binary
+              - databricks-sdk>=0.96.0   # serverless ships an older SDK without w.postgres

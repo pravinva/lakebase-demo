@@ -489,6 +489,33 @@
     <p class="lead"><b style="color:var(--red)">Recommendation.</b> Provision branches through a platform-owned automation that applies a governed template — data teams self-serve while the platform team controls compute size, autoscaling, and lifecycle centrally.</p>
   </section>
 
+  <!-- 16c DECLARATIVE LINE (migrations) -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Change management</p>
+    <h2>Shipping schema changes: the declarative line</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Above the line — <code>bundle deploy</code></h3>
+        <ul>
+          <li>Project, branches, endpoints, roles, database</li>
+          <li>Synced tables (Databricks derives the schema)</li>
+          <li>Declared as <code>postgres_*</code> resources</li>
+          <li>Reconciled to match the YAML</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Below the line — <code>bundle run</code></h3>
+        <ul>
+          <li>App tables, columns, indexes, grants</li>
+          <li>Ordered, idempotent <code>V1__ / V2__</code> migrations</li>
+          <li>Applied by a job, tracked in <code>schema_version</code></li>
+          <li>Promoted by switching target: dev → stage → prod</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead"><b style="color:var(--red)">Recommendation.</b> Ship Lakebase changes with Declarative Automation Bundles — infrastructure as <code>postgres_*</code> resources, schema as versioned migrations, promoted by target; branch to validate a change, then promote the migration file, not the branch.</p>
+  </section>
+
   <!-- 17 SECTION 06 -->
   <section class="slide section">
     <p class="eyebrow">Section 06 · live</p>

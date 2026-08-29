@@ -1,0 +1,51 @@
+name: Lakebase promote (bundle deploy + migrate)
+
+# Promotion path (the recommended flow): deploy the postgres_* infrastructure
+# and apply the versioned migrations to a target's Lakebase project. Promotion
+# is a change of target -- run this for dev, then stage, then prod.
+#
+# Manual by design (workflow_dispatch). To promote automatically on merge,
+# add a `push: {branches: [main], paths: [databricks.yml, resources/**,
+# src/migrations/**, src/deploy_schema.py]}` trigger.
+#
+# Runs on a self-hosted runner in the allowed network (workspace IP ACLs block
+# GitHub-hosted runners); set repo variable CI_RUNNER to its label. Needs the
+# DATABRICKS_* secrets (a service principal with CAN_MANAGE on the project).
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Bundle target to promote to"
+        type: choice
+        options: [dev, stage, prod]
+        default: dev
+
+jobs:
+  promote:
+    name: Deploy + migrate (${{ inputs.target }})
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard - require Databricks secrets
+        id: guard
+        run: |
+          if [ -z "$DATABRICKS_CLIENT_ID" ] || [ -z "$DATABRICKS_HOST" ]; then
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Promote skipped::Set DATABRICKS_* secrets and CI_RUNNER (self-hosted, in-network). See README."
+          else
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install Databricks CLI
+        if: steps.guard.outputs.has_creds == 'true'
+        uses: databricks/setup-cli@main
+      - name: Deploy infrastructure (above the line)
+        if: steps.guard.outputs.has_creds == 'true'
+        run: databricks bundle deploy -t "${{ inputs.target }}" --var ci_sp_application_id="$DATABRICKS_CLIENT_ID"
+      - name: Apply migrations (below the line)
+        if: steps.guard.outputs.has_creds == 'true'
+        run: databricks bundle run schema_deploy -t "${{ inputs.target }}"
