@@ -219,6 +219,44 @@ accumulated changes) into the new schema, and the history tables become
 queryable. Verified end-to-end: agent-memory and task change history land in
 `<cdf_catalog>.suncorp_claims_cdf` and are readable from SQL.
 
+## CI/CD: a Lakebase branch per PR
+
+`.github/workflows/lakebase-pr-branch.yml` + `scripts/ci_lakebase_branch.py`
+demonstrate **ephemeral database environments** with Lakebase branching — the
+operational-DB analogue of preview apps:
+
+1. **validate** (always runs, no secrets) — offline static safety / contract
+   checks + migration dry-runs.
+2. **ephemeral-branch** (on PR open / update) — creates a **copy-on-write branch
+   off production** named `ci-pr-<n>`, applies the migrations to it, and
+   smoke-tests the RPC boundary (read/write works, cross-claim is denied) — all
+   on a throwaway clone that never touches production.
+3. **teardown** (on PR close / merge) — deletes the branch (cascades its endpoint).
+
+Every PR gets an isolated, production-like database to validate schema / RPC
+changes before merge, then it is reclaimed automatically. CI branches carry a
+TTL so strays self-expire, and the CI endpoint is small + scale-to-zero.
+
+### One-time setup for the live jobs
+
+The `validate` job needs no configuration. The live branch jobs need a **service
+principal with `CAN CREATE` / `CAN MANAGE` on the Lakebase project** and three
+repo secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `DATABRICKS_HOST` | workspace URL, e.g. `https://<workspace>.cloud.databricks.com` |
+| `DATABRICKS_CLIENT_ID` | the service principal's application / client ID |
+| `DATABRICKS_CLIENT_SECRET` | an OAuth secret for that service principal |
+
+```bash
+gh secret set DATABRICKS_HOST         --repo <owner>/<repo> --body "https://<workspace>.cloud.databricks.com"
+gh secret set DATABRICKS_CLIENT_ID    --repo <owner>/<repo> --body "<sp-application-id>"
+gh secret set DATABRICKS_CLIENT_SECRET --repo <owner>/<repo> --body "<sp-oauth-secret>"
+```
+
+Without the secrets, the live jobs skip cleanly and only `validate` runs.
+
 ## Design notes
 
 - Use separate service principals for UiPath and Databricks agent runtimes where

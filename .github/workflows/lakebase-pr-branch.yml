@@ -1,0 +1,112 @@
+name: Lakebase branch per PR
+
+# Demonstrates the "database branch per pull request" pattern for Lakebase:
+#   * validate       — offline safety/contract checks (always runs, no secrets)
+#   * ephemeral-branch — create a copy-on-write Lakebase branch off production,
+#                        apply migrations, smoke-test the RPC boundary
+#   * teardown       — delete the PR's Lakebase branch when the PR closes
+#
+# The live jobs need three repo secrets (a service principal with CAN CREATE /
+# CAN MANAGE on the Lakebase project). Without them, the live jobs cleanly skip
+# and only `validate` runs — see README "CI/CD: a Lakebase branch per PR".
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+
+concurrency:
+  group: lakebase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  LAKEBASE_PROJECT_ID: suncorp-claims-center
+  LAKEBASE_SOURCE_BRANCH: production
+  LAKEBASE_DB_NAME: claims_center
+  LAKEBASE_PG_SCHEMA: claims
+  CI_BRANCH_NAME: ci-pr-${{ github.event.pull_request.number || github.run_id }}
+
+jobs:
+  validate:
+    name: Offline validation (no secrets)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Static safety + contract checks
+        run: python tests/test_sql_static.py
+      - name: Migration dry-runs (placeholder guard, no DB)
+        run: |
+          python scripts/apply_sql.py --file sql/001_schema.sql
+          python scripts/apply_sql.py --file sql/003_rpc_functions.sql
+          python scripts/apply_sql.py --file sql/004_cdf_prereqs.sql
+
+  ephemeral-branch:
+    name: Ephemeral Lakebase branch (create - migrate - test)
+    if: github.event.action != 'closed'
+    needs: validate
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Guard - require Databricks secrets
+        id: guard
+        run: |
+          if [ -z "$DATABRICKS_CLIENT_ID" ] || [ -z "$DATABRICKS_HOST" ]; then
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Lakebase live job skipped::Databricks secrets not set. See README 'CI/CD: a Lakebase branch per PR'."
+          else
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install dependencies
+        if: steps.guard.outputs.has_creds == 'true'
+        run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
+      - name: Create Lakebase branch for this PR
+        if: steps.guard.outputs.has_creds == 'true'
+        run: python scripts/ci_lakebase_branch.py create --name "$CI_BRANCH_NAME"
+      - name: Apply migrations to the branch
+        if: steps.guard.outputs.has_creds == 'true'
+        run: python scripts/ci_lakebase_branch.py migrate --name "$CI_BRANCH_NAME"
+      - name: Smoke-test the RPC boundary on the branch
+        if: steps.guard.outputs.has_creds == 'true'
+        run: python scripts/ci_lakebase_branch.py test --name "$CI_BRANCH_NAME"
+      - name: Summary
+        if: steps.guard.outputs.has_creds == 'true'
+        run: echo "::notice title=Lakebase branch validated::$CI_BRANCH_NAME cloned from production, migrated and RPC-boundary tested; it will be deleted when this PR closes."
+
+  teardown:
+    name: Tear down the PR's Lakebase branch
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Guard
+        id: guard
+        run: |
+          if [ -z "$DATABRICKS_CLIENT_ID" ]; then
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install dependencies
+        if: steps.guard.outputs.has_creds == 'true'
+        run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
+      - name: Delete the PR's Lakebase branch
+        if: steps.guard.outputs.has_creds == 'true'
+        run: python scripts/ci_lakebase_branch.py destroy --name "$CI_BRANCH_NAME"
