@@ -1,14 +1,19 @@
 name: Lakebase branch per PR
 
 # Demonstrates the "database branch per pull request" pattern for Lakebase:
-#   * validate       — offline safety/contract checks (always runs, no secrets)
+#   * validate         — offline safety/contract checks (always runs, no secrets)
 #   * ephemeral-branch — create a copy-on-write Lakebase branch off production,
 #                        apply migrations, smoke-test the RPC boundary
-#   * teardown       — delete the PR's Lakebase branch when the PR closes
+#   * teardown         — delete the PR's Lakebase branch when the PR closes
 #
-# The live jobs need three repo secrets (a service principal with CAN CREATE /
-# CAN MANAGE on the Lakebase project). Without them, the live jobs cleanly skip
-# and only `validate` runs — see README "CI/CD: a Lakebase branch per PR".
+# Live jobs need three repo secrets (a service principal with CAN CREATE /
+# CAN MANAGE on the Lakebase project). Without them the live jobs cleanly skip.
+#
+# NOTE: if the workspace enforces an IP access list (common in production), a
+# GitHub-hosted runner is blocked. Point the live jobs at a self-hosted runner
+# inside the allowed network by setting the repo variable CI_RUNNER to its
+# label; otherwise the live steps skip with guidance and the PR stays green.
+# See README "CI/CD: a Lakebase branch per PR".
 
 on:
   pull_request:
@@ -48,7 +53,7 @@ jobs:
     name: Ephemeral Lakebase branch (create - migrate - test)
     if: github.event.action != 'closed'
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
@@ -71,22 +76,33 @@ jobs:
         if: steps.guard.outputs.has_creds == 'true'
         run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
       - name: Create Lakebase branch for this PR
+        id: create
         if: steps.guard.outputs.has_creds == 'true'
-        run: python scripts/ci_lakebase_branch.py create --name "$CI_BRANCH_NAME"
+        run: |
+          set +e
+          python scripts/ci_lakebase_branch.py create --name "$CI_BRANCH_NAME"
+          code=$?
+          if [ "$code" = "75" ]; then
+            echo "reachable=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Runner cannot reach workspace::Skipping live branch steps (workspace IP ACL). Set repo variable CI_RUNNER to a self-hosted runner in the allowed network."
+            exit 0
+          fi
+          [ "$code" = "0" ] && echo "reachable=true" >> "$GITHUB_OUTPUT" || echo "reachable=false" >> "$GITHUB_OUTPUT"
+          exit $code
       - name: Apply migrations to the branch
-        if: steps.guard.outputs.has_creds == 'true'
+        if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
         run: python scripts/ci_lakebase_branch.py migrate --name "$CI_BRANCH_NAME"
       - name: Smoke-test the RPC boundary on the branch
-        if: steps.guard.outputs.has_creds == 'true'
+        if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
         run: python scripts/ci_lakebase_branch.py test --name "$CI_BRANCH_NAME"
       - name: Summary
-        if: steps.guard.outputs.has_creds == 'true'
+        if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
         run: echo "::notice title=Lakebase branch validated::$CI_BRANCH_NAME cloned from production, migrated and RPC-boundary tested; it will be deleted when this PR closes."
 
   teardown:
     name: Tear down the PR's Lakebase branch
     if: github.event.action == 'closed'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
@@ -109,4 +125,12 @@ jobs:
         run: pip install "databricks-sdk>=0.133" "psycopg[binary]"
       - name: Delete the PR's Lakebase branch
         if: steps.guard.outputs.has_creds == 'true'
-        run: python scripts/ci_lakebase_branch.py destroy --name "$CI_BRANCH_NAME"
+        run: |
+          set +e
+          python scripts/ci_lakebase_branch.py destroy --name "$CI_BRANCH_NAME"
+          code=$?
+          if [ "$code" = "75" ]; then
+            echo "::warning title=Runner cannot reach workspace::Could not delete $CI_BRANCH_NAME from this runner (IP ACL). Delete it from an allowed network or self-hosted runner."
+            exit 0
+          fi
+          exit $code

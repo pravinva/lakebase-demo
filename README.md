@@ -258,6 +258,24 @@ gh secret set DATABRICKS_CLIENT_SECRET --repo <owner>/<repo> --body "<sp-oauth-s
 
 Without the secrets, the live jobs skip cleanly and only `validate` runs.
 
+### Runners and workspace IP access lists
+
+If the workspace enforces an **IP access list** (common in production, and true
+of the demo sandbox), GitHub-hosted runners are blocked — the SDK authenticates
+fine but the API call is rejected (`Source IP … is blocked by Databricks IP
+ACL`). The workflow treats this as a clean skip with guidance rather than a
+failure. To run the live branch jobs, use a **self-hosted runner inside the
+allowed network** and point the jobs at it by setting the repo variable
+`CI_RUNNER` to its label:
+
+```bash
+gh variable set CI_RUNNER --repo <owner>/<repo> --body "<self-hosted-runner-label>"
+```
+
+The pipeline itself is verified end-to-end from an allowed network:
+`create` (branch off production) → `migrate` (001/003/004) → `test` (14 offline
+checks + live RPC read/write and cross-claim-denied on the branch) → `destroy`.
+
 ## Design notes
 
 - Use separate service principals for UiPath and Databricks agent runtimes where

@@ -59,8 +59,10 @@ def _wait(fn, ok, tries=60, delay=5, what="resource"):
     raise TimeoutError(f"timed out waiting for {what}; last={last!r}")
 
 def _state(obj):
+    # SDK returns an enum (e.g. BranchStatusState.READY); normalize to its value.
     st = getattr(obj, "status", None)
-    return getattr(st, "current_state", None) if st else None
+    cs = getattr(st, "current_state", None) if st else None
+    return getattr(cs, "value", None) or (str(cs) if cs is not None else None)
 
 def _endpoint(w, name):
     eps = list(w.postgres.list_endpoints(branch_path(name)))
@@ -182,8 +184,21 @@ def main() -> int:
         sp = sub.add_parser(c)
         sp.add_argument("--name", required=True, help="Lakebase branch name (e.g. ci-pr-42)")
     args = ap.parse_args()
-    return {"create": cmd_create, "migrate": cmd_migrate,
-            "test": cmd_test, "destroy": cmd_destroy}[args.cmd](args) or 0
+    try:
+        return {"create": cmd_create, "migrate": cmd_migrate,
+                "test": cmd_test, "destroy": cmd_destroy}[args.cmd](args) or 0
+    except Exception as exc:  # noqa: BLE001
+        m = str(exc).lower()
+        # A workspace IP access list will block GitHub-hosted runners. That's an
+        # environment/network policy, not a pipeline error: exit 75 so the
+        # workflow can report it as "run on a self-hosted runner" and stay green.
+        if "ip acl" in m or "is blocked" in m or "blocked by databricks" in m:
+            print("::warning title=Workspace not reachable::Runner IP is blocked "
+                  "by the workspace IP access list. Run the live Lakebase jobs on "
+                  "a self-hosted runner inside the allowed network. Detail: "
+                  f"{exc}", file=sys.stderr)
+            return 75
+        raise
 
 if __name__ == "__main__":
     raise SystemExit(main())
