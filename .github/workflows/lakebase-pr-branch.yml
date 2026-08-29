@@ -91,15 +91,12 @@ jobs:
           fi
           [ "$code" = "0" ] && echo "reachable=true" >> "$GITHUB_OUTPUT" || echo "reachable=false" >> "$GITHUB_OUTPUT"
           exit $code
-      - name: Apply migrations to the branch
-        if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
-        run: $PY scripts/ci_lakebase_branch.py migrate --name "$CI_BRANCH_NAME"
-      - name: Smoke-test the RPC boundary on the branch
+      - name: Verify the clone (offline checks + RPC boundary on the branch)
         if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
         run: $PY scripts/ci_lakebase_branch.py test --name "$CI_BRANCH_NAME"
       - name: Summary
         if: steps.guard.outputs.has_creds == 'true' && steps.create.outputs.reachable == 'true'
-        run: echo "::notice title=Lakebase branch validated::$CI_BRANCH_NAME cloned from production, migrated and RPC-boundary tested; it will be deleted when this PR closes."
+        run: echo "::notice title=Lakebase branch validated::$CI_BRANCH_NAME cloned from production and RPC-boundary verified (read/write works, cross-claim denied); deleted when this PR closes."
 
   teardown:
     name: Tear down the PR's Lakebase branch

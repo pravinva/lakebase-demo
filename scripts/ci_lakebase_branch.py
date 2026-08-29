@@ -120,6 +120,12 @@ def cmd_create(args):
     _gh_output("host", host)
 
 def cmd_migrate(args):
+    # NOTE: applying the DDL migrations requires an OWNER / migration principal
+    # (CREATE on the database + schema). The least-privilege runtime service
+    # principal used by CI has EXECUTE-only and will get "permission denied for
+    # database". The CI workflow therefore does NOT call migrate on the branch
+    # clone (the clone is already migrated); it verifies the clone via `test`.
+    # Run `migrate` with an owner identity when validating a NEW migration.
     w = _client()
     ep = _endpoint(w, args.name)
     if not ep:

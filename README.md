@@ -228,10 +228,16 @@ operational-DB analogue of preview apps:
 1. **validate** (always runs, no secrets) — offline static safety / contract
    checks + migration dry-runs.
 2. **ephemeral-branch** (on PR open / update) — creates a **copy-on-write branch
-   off production** named `ci-pr-<n>`, applies the migrations to it, and
-   smoke-tests the RPC boundary (read/write works, cross-claim is denied) — all
-   on a throwaway clone that never touches production.
+   off production** named `ci-pr-<n>` (already migrated, since it's a clone) and
+   verifies it: read/write works and **cross-claim access is denied** — all on a
+   throwaway clone that never touches production.
 3. **teardown** (on PR close / merge) — deletes the branch (cascades its endpoint).
+
+The runtime service principal is least-privilege (EXECUTE on the RPCs only), so
+it can create the branch clone and exercise the RPC boundary but cannot run DDL.
+Migration SQL changes are validated statically in the **validate** job; applying
+a *new* migration to a branch is done with an owner / deploy identity
+(`ci_lakebase_branch.py migrate`), not the runtime principal.
 
 Every PR gets an isolated, production-like database to validate schema / RPC
 changes before merge, then it is reclaimed automatically. The teardown job
