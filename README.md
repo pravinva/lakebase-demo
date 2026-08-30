@@ -44,6 +44,7 @@ direct DML on the memory, task, or audit tables.
 | `src/migrations/V*__*.sql` | **bundle** — versioned schema migrations applied by the `schema_deploy` job on `bundle run` |
 | `src/deploy_schema.py` | migration runner (ordered, OAuth, `schema_version` tracking, `{{var}}` substitution) |
 | `src/schema_diff.py` | compare schema across two branches (PR validation) |
+| `demo/branching_runsheet.sh` | live demo runsheet — Part A manual (create/connect/show/isolate/drop), Part B branch-per-PR via GitHub Actions |
 
 ## Object model (at a glance)
 
