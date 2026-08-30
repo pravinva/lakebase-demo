@@ -428,6 +428,33 @@
     </div>
   </section>
 
+  <!-- 14b IDENTITY & ATTRIBUTION -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity</p>
+    <h2>Identity for the Data API &amp; attribution</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Service principal per runtime <span style="color:var(--muted);font-weight:500">— Data API</span></h3>
+        <ul>
+          <li>The Data API maps the token to the <b>individual</b> identity</li>
+          <li>Give each runtime its own SP role (<code>databricks_create_role</code>)</li>
+          <li>Audit <code>principal</code> = the SP — precise per-runtime attribution</li>
+          <li>The path the agents use in this demo</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Group role <span style="color:var(--muted);font-weight:500">— direct connection</span></h3>
+        <ul>
+          <li>Map a group with <code>databricks_create_role(name,'GROUP')</code></li>
+          <li>Members connect <b>as the group role</b> with their own token</li>
+          <li>Not used by the Data API (it keys off the individual)</li>
+          <li>Audit <code>principal</code> = the group — pass an actor id for per-person</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">Audit records the <b>authenticated principal</b> and the caller-supplied <b>logical agent id</b> on every operation — SPs give per-runtime attribution; a shared group role attributes to the group unless the caller identity is passed in.</p>
+  </section>
+
   <!-- 15 SECTION 05 -->
   <section class="slide section">
     <p class="eyebrow">Section 05</p>
