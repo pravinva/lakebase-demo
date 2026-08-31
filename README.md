@@ -380,3 +380,5 @@ python tests/test_sql_static.py     # 13 static safety + contract checks, no DB
 - Lakebase role guidance: managed identity role with `SERVICE_PRINCIPAL` and `LAKEBASE_OAUTH_V1`.
 - Databricks CLI Autoscaling Postgres commands (`databricks postgres ...`) for
   endpoint host lookup and short-lived credential minting.
+
+<!-- live branch demo 02:53Z -->
