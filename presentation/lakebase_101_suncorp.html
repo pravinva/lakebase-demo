@@ -274,6 +274,33 @@
     </div>
   </section>
 
+  <!-- 7a HOW AUTOSCALING WORKS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
+    <h2>How autoscaling works</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>How it scales</h3>
+        <ul>
+          <li>Compute in <b>Compute Units</b> — <b>2&nbsp;GB RAM each</b>, up to 32&nbsp;CU</li>
+          <li>Watches <b>CPU</b>, <b>memory</b> and <b>working-set size</b> (hot data)</li>
+          <li>Adjusts within your range with <b>no database restart</b></li>
+          <li>Proactive — heads off slowdowns and out-of-memory</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Guardrails you set</h3>
+        <ul>
+          <li><b>Min CU</b> — responsiveness floor at low traffic</li>
+          <li><b>Max CU</b> — cost ceiling for spikes</li>
+          <li>Max − min spread is bounded (keeps scaling predictable)</li>
+          <li><b>Scale-to-zero</b> on an idle timeout — ~70% savings on bursty/dev</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">You set the floor and ceiling; Lakebase moves between them automatically on real load — no manual resizing, no restarts within the range.</p>
+  </section>
+
   <!-- 7b BRANCHING & BUDGET (concept) -->
   <section class="slide">
     <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>

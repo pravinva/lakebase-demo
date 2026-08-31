@@ -67,7 +67,7 @@
   <div class="cover">
     <div class="kick">Presenter Talk Track · 60 minutes</div>
     <h1>Lakebase 101</h1>
-    <div class="sub">Suncorp AI CoE · CDP · Infosec — narration, timing, live-demo run-sheet, and Q&amp;A prep for the 29-slide deck.</div>
+    <div class="sub">Suncorp AI CoE · CDP · Infosec — narration, timing, live-demo run-sheet, and Q&amp;A prep for the 30-slide deck.</div>
     <div class="bar"></div>
   </div>
 
@@ -80,13 +80,13 @@
     <tbody>
       <tr><td>Open &amp; agenda</td><td>1–2</td><td>Host</td><td class="min">2 min</td></tr>
       <tr><td>01 · Context</td><td>3–4</td><td>AI CoE (Kranthi)</td><td class="min">4 min</td></tr>
-      <tr><td>02 · Lakebase 101</td><td>5–8</td><td>AI CoE</td><td class="min">8 min</td></tr>
-      <tr><td>03 · Reference architecture — data flow</td><td>9–11</td><td>AI CoE + CDP</td><td class="min">8 min</td></tr>
-      <tr><td>04 · Security &amp; connectivity</td><td>12–16</td><td>Infosec + AI CoE</td><td class="min">12 min</td></tr>
-      <tr><td>05 · Lakeflow cost controls</td><td>17–21</td><td>CDP</td><td class="min">5 min</td></tr>
-      <tr><td>06 · Live demo (opens with branching)</td><td>22–26</td><td>SA / AI CoE</td><td class="min">15 min</td></tr>
-      <tr><td>Wrap-up &amp; next steps</td><td>27–28</td><td>Host</td><td class="min">4 min</td></tr>
-      <tr><td>Q&amp;A buffer</td><td>29</td><td>All</td><td class="min">2 min</td></tr>
+      <tr><td>02 · Lakebase 101</td><td>5–9</td><td>AI CoE</td><td class="min">8 min</td></tr>
+      <tr><td>03 · Reference architecture — data flow</td><td>10–12</td><td>AI CoE + CDP</td><td class="min">8 min</td></tr>
+      <tr><td>04 · Security &amp; connectivity</td><td>13–17</td><td>Infosec + AI CoE</td><td class="min">12 min</td></tr>
+      <tr><td>05 · Lakeflow cost controls</td><td>18–22</td><td>CDP</td><td class="min">5 min</td></tr>
+      <tr><td>06 · Live demo (opens with branching)</td><td>23–27</td><td>SA / AI CoE</td><td class="min">15 min</td></tr>
+      <tr><td>Wrap-up &amp; next steps</td><td>28–29</td><td>Host</td><td class="min">4 min</td></tr>
+      <tr><td>Q&amp;A buffer</td><td>30</td><td>All</td><td class="min">2 min</td></tr>
     </tbody>
     <tfoot><tr><td colspan="3">Total</td><td class="min">60 min</td></tr></tfoot>
   </table>
@@ -120,88 +120,92 @@
     <p class="say"><b>SAY:</b> The resource model is simple: a Project contains Branches, and each Branch has Endpoints — read-write and, if you want, read-only. It scales to zero and you pay for use. The most important idea on this slide is on the right: Lakebase is an <b>acceleration and serving layer, not your system of record</b>. Delta on Unity Catalog stays the source of truth. Lakebase is the low-latency mirror agents and apps talk to. Keep that boundary and the rest of the architecture falls into place.</p>
     <p class="cue"><b>CUE:</b> This "not the SoR" line is the thesis — say it slowly. Transition: "so how does data get there?"</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">8</span><span class="ttl">Branching &amp; budget controls</span><span class="who">AI CoE + CDP · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">8</span><span class="ttl">How autoscaling works</span><span class="who">AI CoE · 2:30</span></div>
+    <p class="say"><b>SAY:</b> A little more on how the autoscaling actually behaves, because it underpins both the performance and the cost story. Compute is measured in Compute Units, two gigabytes of memory each, up to thirty-two. Lakebase watches three signals — CPU load, memory usage, and the working-set size, which is how much hot data it is keeping in cache — and it adjusts capacity within the range you set, with no database restart while it stays in that range. You set two guardrails: a minimum CU, which is your responsiveness floor when traffic is low, and a maximum CU, which is your cost ceiling for spikes. The spread between them is bounded so scaling stays predictable — confirm the current cap in the docs, as it is version-dependent. And you pair it with scale-to-zero: after an idle timeout the compute suspends entirely, which is where the roughly seventy percent savings on bursty and development workloads comes from, and it resumes at the minimum size on the next connection.</p>
+    <p class="cue"><b>CUE:</b> Sets up the branching + cost slides: a branch is storage-only until an endpoint runs, and that endpoint scales to zero.</p></div>
+
+  <div class="slide"><div class="hd"><span class="no">9</span><span class="ttl">Branching &amp; budget controls</span><span class="who">AI CoE + CDP · 2:00</span></div>
     <p class="say"><b>SAY:</b> One capability to call out before the demo: branching. A Lakebase branch is a git-style, copy-on-write clone of production — schema, data and functions — created in seconds, for isolated dev, test or preview, then dropped when you are done. For CDP and Infosec the cost story is the reassuring part: a branch has no compute until you attach an endpoint, each endpoint has a capped CU and scales to zero, you gate who can create branches with project ACLs, and you tag plus attach a budget policy for chargeback. Teams self-serve safely without risking prod or the bill — and you will see this open the live demo.</p>
     <p class="cue"><b>CUE:</b> Ties to §05 cost controls and to the demo opener (slide 18).</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">9</span><span class="ttl">Section 03 — Data flow</span><span class="who">AI CoE + CDP · 0:20</span></div>
+  <div class="slide"><div class="hd"><span class="no">10</span><span class="ttl">Section 03 — Data flow</span><span class="who">AI CoE + CDP · 0:20</span></div>
     <p class="say"><b>SAY:</b> Here's the reference data flow.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">10</span><span class="ttl">Source → Delta → Lakebase</span><span class="who">CDP · 4:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">11</span><span class="ttl">Source → Delta → Lakebase</span><span class="who">CDP · 4:00</span></div>
     <p class="say"><b>SAY:</b> Left to right: source systems — policy, claims, CRM — land through Lakeflow ingest. Delta on Unity Catalog is the governed system of record: lineage, audit, everything you already trust. From there, <b>synced tables</b> mirror the curated Delta data into Lakebase. One detail worth knowing: a synced table has a primary key and an optional <b>timeseries key</b> — a monotonic column like an update timestamp — so Lakebase always holds the <i>latest</i> row per key even if updates arrive out of order. Then apps and agents read and write live state at low latency, and you can optionally write agent state back to Delta for analytics and retention.</p>
     <p class="cue"><b>CUE:</b> CDP owns this slide. Flag that "latest-row-wins" is a correctness setting, not a cost setting — cost comes two slides on.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">11</span><span class="ttl">Acceleration layer, not system of record</span><span class="who">AI CoE · 3:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">12</span><span class="ttl">Acceleration layer, not system of record</span><span class="who">AI CoE · 3:00</span></div>
     <p class="say"><b>SAY:</b> Reinforcing the boundary because it drives every design decision. Lakebase <i>is</i> a serving store, operational agent memory, app and session state, a governed mirror of Delta. It is <i>not</i> your source of truth, not a BI warehouse, not where you retain long-term history, and — critically for Infosec — not a way to bypass Unity Catalog. If someone proposes making Lakebase the only home for important data, that's the anti-pattern.</p>
     <p class="cue"><b>CUE:</b> Good place to pause for questions before the security section.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">12</span><span class="ttl">Section 04 — Security &amp; connectivity</span><span class="who">Infosec · 0:20</span></div>
+  <div class="slide"><div class="hd"><span class="no">13</span><span class="ttl">Section 04 — Security &amp; connectivity</span><span class="who">Infosec · 0:20</span></div>
     <p class="say"><b>SAY:</b> This is the part Infosec cares most about — how identity and access actually work.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">13</span><span class="ttl">Identity chain (documented, not live)</span><span class="who">Infosec · 3:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">14</span><span class="ttl">Identity chain (documented, not live)</span><span class="who">Infosec · 3:30</span></div>
     <p class="say"><b>SAY:</b> Here's the end-to-end identity chain, and it maps to your existing design doc. Entra ID authenticates the UiPath service principal. UiPath uses that to get a Databricks OAuth token for the service principal — machine-to-machine, no human in the loop. The service principal then mints a <b>short-lived</b> Lakebase database credential — a JWT that expires in about an hour — so there are <b>no static passwords</b> anywhere. That JWT maps to a specific Postgres role. So the identity you manage in Entra is the identity that shows up in the database. We're presenting this as reference architecture today; the live demo runs the same mechanics on the field-eng workspace.</p>
     <p class="cue"><b>CUE:</b> Reference the Suncorp identity doc by name if it's in the room. Emphasize "short-lived, no static secrets."</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">14</span><span class="ttl">UC / Postgres RBAC boundary</span><span class="who">Infosec · 3:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">15</span><span class="ttl">UC / Postgres RBAC boundary</span><span class="who">Infosec · 3:30</span></div>
     <p class="say"><b>SAY:</b> There are two governance planes, and the same identity is governed on both. Unity Catalog governs the lakehouse side — catalogs, schemas, lineage, the CDF history tables, Databricks-level grants and audit. Postgres RBAC governs the live rows in Lakebase — roles, row-level security, grants, the security-definer functions, and the Data API role mapping. The takeaway: this isn't a governance gap you bolt onto later; both planes are first-class, and a principal is controlled on each side.</p>
     <p class="cue"><b>CUE:</b> Set up the next slide: "within the Postgres plane, the key concept is role versus ownership."</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">15</span><span class="ttl">Role vs ownership</span><span class="who">Infosec + AI CoE · 4:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">16</span><span class="ttl">Role vs ownership</span><span class="who">Infosec + AI CoE · 4:00</span></div>
     <p class="say"><b>SAY:</b> This is the concept that makes the demo make sense. The <b>authenticated principal</b> — the service principal or user — maps to a Postgres role that has least privilege: it can only <code>EXECUTE</code> a handful of approved functions, and it's recorded in every audit row. Separately, an <b>owner</b> role owns the tables and those functions. The functions run as the owner — that's <code>SECURITY DEFINER</code> — so they can do the work while the caller never gets direct access to tables. The runtime never owns anything. One field lesson baked in: to make this work over the HTTP Data API you must create the role with <code>databricks_create_role</code>, not the SDK — otherwise the API can't switch into it. We'll see all of this live.</p>
     <p class="cue"><b>CUE:</b> Keep it conceptual here; the demo is the proof. Transition to cost.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">16</span><span class="ttl">Identity for the Data API &amp; attribution</span><span class="who">Infosec + AI CoE · 2:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">17</span><span class="ttl">Identity for the Data API &amp; attribution</span><span class="who">Infosec + AI CoE · 2:30</span></div>
     <p class="say"><b>SAY:</b> One clarification that matters for Infosec: how identity works on the Data API, and how it shows up in the audit. The Data API resolves the Postgres role from the individual identity in the token, so each runtime gets its own service-principal role created with databricks_create_role, and the audit records that service principal as the principal — precise, per-runtime attribution. That is the path the agents use in this demo. Group roles are different: you map a Databricks group with databricks_create_role and identity_type GROUP, and members connect as the group role over a direct connection with their own token. That is convenient for analysts and data scientists, but the Data API does not use the group role — it keys off the individual. And because a group role is shared, the audit records the group as the principal, so if you need per-person attribution you either give each runtime its own service principal or pass the actor identity into the call. Verified live on the workspace.</p>
     <p class="cue"><b>CUE:</b> Recommendation: service principal per runtime for the Data API/agents; group roles for direct-connection analyst access.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">17</span><span class="ttl">Section 05 — Lakeflow cost controls</span><span class="who">CDP · 0:20</span></div>
+  <div class="slide"><div class="hd"><span class="no">18</span><span class="ttl">Section 05 — Lakeflow cost controls</span><span class="who">CDP · 0:20</span></div>
     <p class="say"><b>SAY:</b> Cost — this one's for the CDP team.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">18</span><span class="ttl">Sync policy &amp; cost attribution</span><span class="who">CDP · 4:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">19</span><span class="ttl">Sync policy &amp; cost attribution</span><span class="who">CDP · 4:00</span></div>
     <p class="say"><b>SAY:</b> Two levers. First, the <b>sync policy</b>: a synced table runs in SNAPSHOT, TRIGGERED, or CONTINUOUS mode. Continuous is the freshest and the most expensive; triggered or scheduled is fine when batch freshness is acceptable. So you right-size the cadence to how fresh the data actually needs to be — that's the biggest cost dial. Second, <b>attribution</b>: tag your jobs, warehouses, and Lakebase so you can charge back by team or use case, and remember Lakebase scales to zero, which removes idle spend automatically. You monitor all of it through Unity Catalog system tables.</p>
     <p class="cue"><b>CUE:</b> If pushed on numbers, offer a follow-up sizing exercise rather than quoting figures live.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">19</span><span class="ttl">Governed self-service branching</span><span class="who">CDP + AI CoE · 2:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">20</span><span class="ttl">Governed self-service branching</span><span class="who">CDP + AI CoE · 2:30</span></div>
     <p class="say"><b>SAY:</b> This is the operating model that lets data science teams branch on their own while the platform team keeps control of compute and cost. The split is clean. The platform team owns the policy: one branch template with a capped compute size and scale-to-zero, branch creation run by a service principal, a budget policy and cost tags on the project, and CU-hours tracked in system tables. The data teams self-serve: they request a branch through automation rather than a ticket, receive an isolated clone of production, work on compute that is bounded and scales to zero, and the branch expires when the work ends. Recommendation: provision branches through a platform-owned automation that applies the governed template, so the platform team sets compute size, autoscaling, and lifecycle once and data teams self-serve within those limits.</p>
     <p class="cue"><b>CUE:</b> The live demo section is a working reference of this automation (create, verify, teardown).</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">20</span><span class="ttl">Shipping schema changes: the declarative line</span><span class="who">CDP + AI CoE · 2:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">21</span><span class="ttl">Shipping schema changes: the declarative line</span><span class="who">CDP + AI CoE · 2:30</span></div>
     <p class="say"><b>SAY:</b> How schema changes ship is the declarative line. Above the line, bundle deploy reconciles the postgres_* infrastructure from version-controlled YAML: project, branches, endpoints, roles, database, and synced tables. Below the line, bundle run applies the application schema, its tables, columns, indexes and grants, as ordered idempotent migration files tracked in a schema_version table. Promotion is a change of target: the same code deploys and migrates dev, then stage, then prod, each its own Lakebase project. Recommendation: ship Lakebase changes with Declarative Automation Bundles, infrastructure as postgres_* resources and schema as versioned migrations promoted by target, and branch to validate a change, then promote the migration file rather than the branch.</p>
     <p class="cue"><b>CUE:</b> Verified live: bundle deploy provisioned a dev project and bundle run applied the migrations on serverless.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">21</span><span class="ttl">The declarative line -- a simple example</span><span class="who">CDP + AI CoE · 1:30</span></div>
+  <div class="slide"><div class="hd"><span class="no">22</span><span class="ttl">The declarative line -- a simple example</span><span class="who">CDP + AI CoE · 1:30</span></div>
     <p class="say"><b>SAY:</b> A simple example makes the split concrete. Take an orders table your application owns: you write its CREATE TABLE in a migration file and it applies below the line on bundle run. Now take a customer_segments table synced from a Delta source: you name the source and the primary key, Databricks derives the columns, and it deploys above the line as a postgres_synced_tables resource. Rule of thumb: if you write the columns, it is a migration below the line; if Databricks derives or manages them, it is a postgres_* resource above the line.</p>
     <p class="cue"><b>CUE:</b> In the repo, resources/synced.postgres.yml is the above-the-line example and src/migrations/V1__schema.sql is the below-the-line one.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">22</span><span class="ttl">Section 06 — Live demo</span><span class="who">SA · 0:30</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">23</span><span class="ttl">Section 06 — Live demo</span><span class="who">SA · 0:30</span></div>
     <p class="say"><b>SAY:</b> Now the fun part. Everything we just described, running for real on the field-eng workspace. It's synthetic claims data and a non-production starter, but the security behaviors are real and verified.</p>
     <p class="cue"><b>CUE:</b> Switch to the workspace / terminal. Have the run-sheet (below) open on a second screen.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">23</span><span class="ttl">Branch production — start the demo</span><span class="who">SA · 2:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">24</span><span class="ttl">Branch production — start the demo</span><span class="who">SA · 2:00</span></div>
     <p class="say"><b>SAY:</b> Before we touch agent memory, watch how a developer works safely. I create a <code>dev</code> branch off production — it is copy-on-write, so it is instant and it carries the whole thing: the same schema, the four RPCs, and the seeded claim memory. I give it a small, budget-safe endpoint that scales to zero. Now I can experiment on <code>dev</code> — write a new memory row, try a change — and production never sees it. When I am done, I throw the branch away. That is how teams self-serve without risking prod or the bill.</p>
     <p class="cue"><b>CUE:</b> Run-sheet step 1. Verified live: <code>dev</code> cloned 5 tables + 4 RPCs + the seeded memory; a write on <code>dev</code> left production at 2 rows.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">24</span><span class="ttl">Suncorp claims-center · agent memory</span><span class="who">SA · 2:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">25</span><span class="ttl">Suncorp claims-center · agent memory</span><span class="who">SA · 2:00</span></div>
     <p class="say"><b>SAY:</b> The setup: two agents — a UiPath document-review agent and a Databricks triage agent — and two synthetic claims in different business units. Shared memory lives in a Lakebase Postgres schema called <code>claims</code>. The rules: agents only call approved RPCs, never touch tables directly; every operation writes an append-only audit event, reads included; row changes flow to Unity Catalog through CDF; and cross-claim access is denied. Let me show you.</p>
     <p class="cue"><b>CUE:</b> Begin the run-sheet. Narrate each result as it returns.</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">25</span><span class="ttl">Data API vs direct SQL</span><span class="who">SA · 3:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">26</span><span class="ttl">Data API vs direct SQL</span><span class="who">SA · 3:00</span></div>
     <p class="say"><b>SAY:</b> Two ways in, same governance. The <b>Data API</b> is PostgREST over HTTPS with an OAuth bearer token — no Postgres driver needed, which is exactly what a UiPath or low-code runtime wants. <b>Direct SQL</b> is psql or psycopg with the same OAuth credential — for apps, notebooks, migrations. Both hit the same roles, the same row-level security, the same RPCs. I'll use the Data API as the UiPath agent, and direct SQL as the Databricks agent, so you can see them sharing state.</p>
     <p class="cue"><b>CUE:</b> Run-sheet steps 1–2 (UiPath write via Data API; Databricks read via SQL).</p></div>
 
-  <div class="slide demo"><div class="hd"><span class="no">26</span><span class="ttl">What the demo proves</span><span class="who">SA · 5:00</span></div>
+  <div class="slide demo"><div class="hd"><span class="no">27</span><span class="ttl">What the demo proves</span><span class="who">SA · 5:00</span></div>
     <p class="say"><b>SAY:</b> Here's the scorecard, and these are actual results. As the service principal over the Data API, read, write, and task RPCs all return <span class="g">200</span>. A cross-claim completion returns <span class="r">403</span> — denied, and it writes nothing. A direct table read returns <span class="r">403</span> — the runtime literally cannot bypass the RPCs. The audit trail records both the authenticated principal <i>and</i> the logical agent id, so you can tell who really called versus who they claimed to be. And the row-change history is queryable in Unity Catalog via CDF. Green is good here — including the two 403s, because denial is the point.</p>
     <p class="cue"><b>CUE:</b> Run-sheet steps 3–6. Land the "403 is a feature" line.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">27</span><span class="ttl">Security takeaways</span><span class="who">Host / Infosec · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">28</span><span class="ttl">Security takeaways</span><span class="who">Host / Infosec · 2:00</span></div>
     <p class="say"><b>SAY:</b> To summarize the security posture: runtimes get EXECUTE on approved RPCs only — no direct table writes; row-level security is fail-closed, so direct access returns nothing or is denied; the RPCs enforce explicit claim and business-unit checks in one transaction with the audit write; audit captures the real principal and the logical agent; and CDF gives you immutable write-history in Unity Catalog, with reads audited separately in the app layer.</p>
     <p class="cue"><b>CUE:</b> Invite Infosec to confirm this meets their bar, or name the gaps.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">28</span><span class="ttl">Recommendations &amp; next steps</span><span class="who">Host · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">29</span><span class="ttl">Recommendations &amp; next steps</span><span class="who">Host · 2:00</span></div>
     <p class="say"><b>SAY:</b> Concretely: use separate service principals per agent runtime so attribution is strong; keep Lakebase as the serving layer and Delta as the system of record; standardize the identity chain with Infosec — Entra to OAuth to Postgres role; set the sync cadence and cost tags with CDP; and review the SQL and RPC pattern with security before anything goes to production. We have a reviewed starter package that implements all of this.</p>
     <p class="cue"><b>CUE:</b> Assign owners and a follow-up date live if you can.</p></div>
 
-  <div class="slide"><div class="hd"><span class="no">29</span><span class="ttl">Questions &amp; discussion</span><span class="who">All · 2:00</span></div>
+  <div class="slide"><div class="hd"><span class="no">30</span><span class="ttl">Questions &amp; discussion</span><span class="who">All · 2:00</span></div>
     <p class="say"><b>SAY:</b> That's the pattern end to end. What questions do you have — and where do you want to go next?</p>
     <p class="cue"><b>CUE:</b> Use the Q&amp;A prep below.</p></div>
 
