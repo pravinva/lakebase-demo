@@ -274,6 +274,33 @@
     </div>
   </section>
 
+  <!-- 7a HOW AUTOSCALING WORKS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
+    <h2>How autoscaling works</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>How it scales</h3>
+        <ul>
+          <li>Compute in <b>Compute Units</b> — <b>2&nbsp;GB RAM each</b>, up to 32&nbsp;CU</li>
+          <li>Watches <b>CPU</b>, <b>memory</b> and <b>working-set size</b> (hot data)</li>
+          <li>Adjusts within your range with <b>no database restart</b></li>
+          <li>Proactive — heads off slowdowns and out-of-memory</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Guardrails you set</h3>
+        <ul>
+          <li><b>Min CU</b> — responsiveness floor at low traffic</li>
+          <li><b>Max CU</b> — cost ceiling for spikes</li>
+          <li>Max − min spread is bounded (keeps scaling predictable)</li>
+          <li><b>Scale-to-zero</b> on an idle timeout — ~70% savings on bursty/dev</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">You set the floor and ceiling; Lakebase moves between them automatically on real load — no manual resizing, no restarts within the range.</p>
+  </section>
+
   <!-- 7b BRANCHING & BUDGET (concept) -->
   <section class="slide">
     <p class="eyebrow"><span class="dot">▮</span> Lakebase 101</p>
@@ -426,6 +453,60 @@
         </ul>
       </div>
     </div>
+  </section>
+
+  <!-- 14b IDENTITY & ATTRIBUTION -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity</p>
+    <h2>Identity for the Data API &amp; attribution</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Authenticated principal <span style="color:var(--muted);font-weight:500">— verified</span></h3>
+        <ul>
+          <li>The SP or user in the OAuth token</li>
+          <li>What the Data API <b>authenticates</b> and switches into</li>
+          <li>Least privilege: <code>EXECUTE</code> on the RPCs only</li>
+          <li>Audited as <code>principal</code> on every operation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Logical <code>agent_id</code> <span style="color:var(--muted);font-weight:500">— caller-supplied</span></h3>
+        <ul>
+          <li>A label for <b>which agent is acting</b>, e.g. <code>uipath.document_review.v1</code></li>
+          <li>Passed as a parameter into <b>every RPC call</b></li>
+          <li>Recorded next to the principal in each audit event</li>
+          <li>A <b>claim, not a credential</b> — the app asserts it</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead">Two identities on every operation: the <b>principal</b> is who authenticated; the <code>agent_id</code> is who they act as. Together they give per-operation attribution — and let many agents share one authenticated identity.</p>
+  </section>
+
+  <!-- 14c SCALING TO MANY AGENTS -->
+  <section class="slide">
+    <p class="eyebrow"><span class="dot">▮</span> Security &amp; connectivity · scaling</p>
+    <h2>Scaling to many agents</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Recommended — identity per trust boundary</h3>
+        <ul>
+          <li>One SP per <b>runtime / team / tenant</b>, not per agent</li>
+          <li>500 agents share it; each passes its own <code>agent_id</code></li>
+          <li>A handful of SPs and secrets to manage</li>
+          <li>Full per-agent attribution via <code>agent_id</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Only if per-agent DB identity is required</h3>
+        <ul>
+          <li>Create N SPs, then <code>databricks_create_role</code> each (automated loop)</li>
+          <li>A <b>group doesn't reduce identities</b> or serve the Data API</li>
+          <li>The Data API still authenticates each SP individually</li>
+          <li>Cost: N OAuth secrets to issue and rotate</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead"><b style="color:var(--red)">Recommendation.</b> Distinguish agents by <code>agent_id</code> under one SP per trust boundary; create a service principal per agent only when you need per-agent database authentication, isolation, or revocation.</p>
   </section>
 
   <!-- 15 SECTION 05 -->
